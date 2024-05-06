@@ -219,6 +219,22 @@ socks = ["PySocks (>=1.5.6,!=1.5.7)"]
 use-chardet-on-py3 = ["chardet (>=3.0.2,<6)"]
 
 [[package]]
+name = "sonic-logger"
+version = "1.0.4"
+description = "Sonic's Python logging module."
+optional = false
+python-versions = ">=3.8,<4.0"
+files = [
+    {file = "sonic_logger-1.0.4-py3-none-any.whl", hash = "sha256:8b711756692c08b928dcf6b6e2bed13b1238a1f718204b117de32673a2128e10"},
+    {file = "sonic_logger-1.0.4.tar.gz", hash = "sha256:9f21bfb8e2266ad42d467086bde7b094cb6408642b7ede71e1d38b8abcb411eb"},
+]
+
+[package.source]
+type = "legacy"
+url = "https://repo.sonic.net/sonic_python_packages"
+reference = "sonic"
+
+[[package]]
 name = "urllib3"
 version = "2.2.1"
 description = "HTTP library with thread-safe connection pooling, file post, and more."
@@ -238,4 +254,4 @@ zstd = ["zstandard (>=0.18.0)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "484323e20c737c009ccc6908014a19e7ded7b5681744da4f82943c653a593d9e"
+content-hash = "a5c667e20b56005550f9160c474451537fa2ed45faebdbfec0254ea2149cb09b"
