@@ -1,10 +1,13 @@
+import functools
+
 from pyzabbix import ZabbixAPI, ZabbixAPIException
+
 
 class SonicNetboxZabbix_Zabbix:
     """
     Utils for Zabbix stuff
     """
-    
+
     def __init__(self, logger, config):
         self.log = logger
         self.config = config
@@ -13,3 +16,7 @@ class SonicNetboxZabbix_Zabbix:
         api = ZabbixAPI(self.config.zabbixurl)
         api.login(api_token=self.config.zabbixtoken)
         self.api = api
+
+    @functools.cache
+    def get_hosts_all(self):
+        return self.api.host.get()

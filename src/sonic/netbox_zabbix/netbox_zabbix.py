@@ -4,7 +4,7 @@ import logging
 import logging.handlers
 import sys
 
-from pprint import pprint
+from pprint import pprint, pformat
 
 from sonic.netbox_zabbix.zabbix import SonicNetboxZabbix_Zabbix
 from sonic.netbox_zabbix.netbox import SonicNetboxZabbix_Netbox
@@ -45,7 +45,8 @@ class SonicNetboxZabbix:
                     format="%(name)s:%(funcName)s: %(message)s",
                 )
                 self.log = logging.getLogger("netbox_zabbix")
-                sysloghandler = logging.handlers.SysLogHandler(address="/dev/log")
+                sysloghandler = logging.handlers.SysLogHandler(
+                    address="/dev/log")
                 sysloghandler.setLevel(logging.INFO)
                 self.log.addHandler(sysloghandler)
             except Exception as e2:
@@ -59,13 +60,13 @@ class SonicNetboxZabbix:
             self.log.setLevel(logging.ERROR)
 
         self.log.info("Starting Sonic Netbox Zabbix Sync")
-        
+
         self._zabbix_login()
         self._netbox_login()
 
     def _parseargs(self):
         """Parse config files and CLI arguments and return a config object"""
-        
+
         argparser = configargparse.ArgParser(
             default_config_files=[
                 "/etc/sonic/netbox-zabbix.conf",
@@ -81,27 +82,38 @@ class SonicNetboxZabbix:
         argparser.add(
             "-q", "--quiet", action="store_true", help="Show fewer logging messages"
         )
-        argparser.add("--netboxurl", "-n", required=True, help="URL for netbox")
-        argparser.add("--zabbixurl", "-z", required=True, help="URL for zabbix")
-        argparser.add("--netboxtoken", "-N", required=True, help="API auth token for Netbox")
-        argparser.add("--zabbixtoken", "-Z", required=True, help="API auth token for Zabbix")
+        argparser.add("--netboxurl", "-n", required=True,
+                      help="URL for netbox")
+        argparser.add("--zabbixurl", "-z", required=True,
+                      help="URL for zabbix")
+        argparser.add("--netboxtoken", "-N", required=True,
+                      help="API auth token for Netbox")
+        argparser.add("--zabbixtoken", "-Z", required=True,
+                      help="API auth token for Zabbix")
 
         return argparser.parse_args()
 
     def _zabbix_login(self):
         """Log into Zabbix, creating self.zabbix self"""
         self.log.info("Logging into Zabbix")
-        self.zabbix = SonicNetboxZabbix_Zabbix(self.log,self.config)
+        self.zabbix = SonicNetboxZabbix_Zabbix(self.log, self.config)
 
     def _netbox_login(self):
         """Log into Netbox and add napi to self"""
         self.log.info("Logging into Netbox")
-        self.netbox = SonicNetboxZabbix_Netbox(self.log,self.config)
+        self.netbox = SonicNetboxZabbix_Netbox(self.log, self.config)
 
     def run(self):
         """Run cli app with the given arguments."""
         self.log.info("Starting run()")
-        
+
+        self.log.info("Getting list of servers from Zabbix")
+        zabbix_servers = self.zabbix.get_hosts_all()
+        self.log.info(f"DEBUG: zabbix_servers: {pformat(zabbix_servers)}")
+
+        self.log.info("Getting list of servers from Netbox")
+        netbox_servers = self.netbox.get_hosts_active_soc_server()
+        self.log.info(f"DEBUG: netbox_servers: {pformat(netbox_servers)}")
 
 
 def main():
