@@ -45,8 +45,7 @@ class SonicNetboxZabbix:
                     format="%(name)s:%(funcName)s: %(message)s",
                 )
                 self.log = logging.getLogger("netbox_zabbix")
-                sysloghandler = logging.handlers.SysLogHandler(
-                    address="/dev/log")
+                sysloghandler = logging.handlers.SysLogHandler(address="/dev/log")
                 sysloghandler.setLevel(logging.INFO)
                 self.log.addHandler(sysloghandler)
             except Exception as e2:
@@ -82,14 +81,14 @@ class SonicNetboxZabbix:
         argparser.add(
             "-q", "--quiet", action="store_true", help="Show fewer logging messages"
         )
-        argparser.add("--netboxurl", "-n", required=True,
-                      help="URL for netbox")
-        argparser.add("--zabbixurl", "-z", required=True,
-                      help="URL for zabbix")
-        argparser.add("--netboxtoken", "-N", required=True,
-                      help="API auth token for Netbox")
-        argparser.add("--zabbixtoken", "-Z", required=True,
-                      help="API auth token for Zabbix")
+        argparser.add("--netboxurl", "-n", required=True, help="URL for netbox")
+        argparser.add("--zabbixurl", "-z", required=True, help="URL for zabbix")
+        argparser.add(
+            "--netboxtoken", "-N", required=True, help="API auth token for Netbox"
+        )
+        argparser.add(
+            "--zabbixtoken", "-Z", required=True, help="API auth token for Zabbix"
+        )
 
         return argparser.parse_args()
 
