@@ -19,4 +19,7 @@ class SonicNetboxZabbix_Zabbix:
 
     @functools.cache
     def get_hosts_all(self):
-        return self.api.host.get()
+        return self.api.host.get(
+            selectTags=["tag", "value"],
+            selectInheritedTags=["tag", "value"],
+        )

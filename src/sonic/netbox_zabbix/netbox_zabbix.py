@@ -102,18 +102,39 @@ class SonicNetboxZabbix:
         self.log.info("Logging into Netbox")
         self.netbox = SonicNetboxZabbix_Netbox(self.log, self.config)
 
+    def copy_zabbix_hostid_to_netbox(self, zabbix_servers, netbox_servers):
+        for name in zabbix_servers:
+            if netbox_servers[name]:
+                netbox_servers[name]['custom_fields']['zabbix_host_id'] = int(zabbix_servers[name]['hostid'])
+                netbox_servers[name].save()
+            else:
+                self.log.info(f"No such server {name} in netbox data")
+
     def run(self):
         """Run cli app with the given arguments."""
         self.log.info("Starting run()")
 
         self.log.info("Getting list of servers from Zabbix")
-        zabbix_servers = self.zabbix.get_hosts_all()
-        self.log.info(f"DEBUG: zabbix_servers: {pformat(zabbix_servers)}")
+        zabbix_server_list = self.zabbix.get_hosts_all()
+        #self.log.info(f"DEBUG: zabbix_server_list: {pformat(zabbix_server_list)}")
+        self.log.info(f"DEBUG: zabbix_server_list[0]: {pformat(zabbix_server_list[0])}")
+
+        zabbix_server_dict = {}
+        for zabbix_server in zabbix_server_list:
+            zabbix_server_name = zabbix_server['host']
+            zabbix_server_dict[zabbix_server_name] = zabbix_server
 
         self.log.info("Getting list of servers from Netbox")
-        netbox_servers = self.netbox.get_hosts_active_soc_server()
-        self.log.info(f"DEBUG: netbox_servers: {pformat(netbox_servers)}")
+        netbox_server_list = self.netbox.get_hosts_active_soc_server()
+        #self.log.info(f"DEBUG: netbox_server_list: {pformat(netbox_server_list)}")
+        self.log.info(f"DEBUG: netbox_server_list[0]: {pformat(dict(netbox_server_list[0]))}")
 
+        netbox_server_dict = {}
+        for netbox_server in netbox_server_list:
+            netbox_server_name = netbox_server['name']
+            netbox_server_dict[netbox_server_name] = netbox_server
+
+        self.copy_zabbix_hostid_to_netbox(zabbix_server_dict, netbox_server_dict)
 
 def main():
     """Run SonicNetboxZabbix cli with sys.argv from command line."""
