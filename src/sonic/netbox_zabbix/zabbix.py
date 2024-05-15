@@ -1,6 +1,6 @@
 import functools
 
-from pyzabbix import ZabbixAPI, ZabbixAPIException
+from zabbix_utils import ZabbixAPI
 
 
 class SonicNetboxZabbix_Zabbix:
@@ -14,7 +14,7 @@ class SonicNetboxZabbix_Zabbix:
 
         # self.log.info("Logging into Zabbix")
         api = ZabbixAPI(self.config.zabbixurl)
-        api.login(api_token=self.config.zabbixtoken)
+        api.login(token=self.config.zabbixtoken)
         self.api = api
 
     @functools.cache
