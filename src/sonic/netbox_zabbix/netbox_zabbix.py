@@ -123,9 +123,11 @@ class SonicNetboxZabbix:
                 if netbox_servers[name].custom_fields['update_group']:
                     self.log.info(f"Adding update_group to zabbix for {name}")
 
-                    if zabbix_servers[name]['tags']:
+                    if 'tags' in zabbix_servers[name]:
                         tags = zabbix_servers[name]['tags']
+                        self.log.info(f"DEBUG: tags: {pformat(tags)}")
                         new_tags = [item for item in tags if item['tag'] != 'netbox-update-group']
+                        self.log.info(f"DEBUG: new_tags(1): {pformat(new_tags)}")
                     else:
                         new_tags = []
 
@@ -133,13 +135,12 @@ class SonicNetboxZabbix:
                         'tag': 'netbox-update-group',
                         'value': netbox_servers[name].custom_fields['update_group'],
                     })
+
+                    self.log.info(f"DEBUG: new_tags(2): {pformat(new_tags)}")
+
                     response = self.zabbix.api.host.update(
                         hostid=zabbix_servers[name]['hostid'],
-#                       tags=new_tags,
-                        tags={
-                            'tag': 'netbox-update-group',
-                            'value': netbox_servers[name].custom_fields['update_group'],
-                        },
+                        tags=new_tags,
                     )
                     self.log.info(f"DEBUG: response: {pformat(response)}")
                 else:
