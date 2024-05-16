@@ -124,17 +124,50 @@ class SonicNetboxZabbix:
                 if 'tags' in zabbix_servers[name]:
                     tags = zabbix_servers[name]['tags']
                     log.info(f"DEBUG: tags: {pformat(tags)}")
-                    new_tags = [item for item in tags if not item['tag'].startswith('netbox-tag')]
-                    new_tags = [item for item in new_tags if item['tag'] != 'netbox-update-group']
-                    new_tags = [item for item in new_tags if item['tag'] != 'netbox-maintenance-group']
-                    new_tags = [item for item in new_tags if item['tag'] != 'netbox-maintenance-window']
+                    new_tags = [item for item in tags if not item['tag'].startswith('netbox-')]
                     log.info(f"DEBUG: new_tags(1): {pformat(new_tags)}")
                 else:
                     new_tags = []
 
                 new_tags.append({
+                    'tag': 'netbox-id',
+                    'value': str(netbox_servers[name].id)
+                })
+
+
+                new_tags.append({
                     'tag': 'netbox-status',
                     'value': netbox_servers[name].status['value']
+                })
+
+                new_tags.append({
+                    'tag': 'netbox-platform',
+                    'value': netbox_servers[name].platform['slug']
+                })
+
+                new_tags.append({
+                    'tag': 'netbox-site',
+                    'value': netbox_servers[name].site['slug']
+                })
+
+                new_tags.append({
+                    'tag': 'netbox-tenant',
+                    'value': netbox_servers[name].tenant['slug']
+                })
+
+                new_tags.append({
+                    'tag': 'netbox-role',
+                    'value': netbox_servers[name].role['slug']
+                })
+
+                new_tags.append({
+                    'tag': 'netbox-date-created',
+                    'value': netbox_servers[name].created
+                })
+
+                new_tags.append({
+                    'tag': 'netbox-date-last-updated',
+                    'value': netbox_servers[name].last_updated
                 })
 
                 if netbox_servers[name].tags:
