@@ -117,65 +117,77 @@ class SonicNetboxZabbix:
             else:
                 log.info(f"No such server {name} in netbox data")
 
-    def copy_netbox_maint_update_info_to_zabbix_tags(self, netbox_servers, zabbix_servers):
+
+    def copy_netbox_info_to_zabbix_tags(self, netbox_servers, zabbix_servers):
         for name in zabbix_servers:
             if name in netbox_servers and netbox_servers[name]:
-                if 'update_group' in netbox_servers[name].custom_fields and netbox_servers[name].custom_fields['update_group']:
-                    log.info(f"Adding update_group to zabbix for {name}")
-
-                    if 'tags' in zabbix_servers[name]:
-                        tags = zabbix_servers[name]['tags']
-                        log.info(f"DEBUG: tags: {pformat(tags)}")
-                        new_tags = [item for item in tags if item['tag'] != 'netbox-update-group']
-                        log.info(f"DEBUG: new_tags(1): {pformat(new_tags)}")
-                    else:
-                        new_tags = []
-
-                    new_tags.append({
-                        'tag': 'netbox-update-group',
-                        'value': netbox_servers[name].custom_fields['update_group'],
-                    })
-
-                    log.info(f"DEBUG: new_tags(2): {pformat(new_tags)}")
-
-                    self.zabbix.host_update_tags(
-                        hostid=zabbix_servers[name]['hostid'],
-                        tags=new_tags,
-                    )
+                if 'tags' in zabbix_servers[name]:
+                    tags = zabbix_servers[name]['tags']
+                    log.info(f"DEBUG: tags: {pformat(tags)}")
+                    new_tags = [item for item in tags if not item['tag'].startswith('netbox-tag')]
+                    new_tags = [item for item in new_tags if item['tag'] != 'netbox-update-group']
+                    new_tags = [item for item in new_tags if item['tag'] != 'netbox-maintenance-group']
+                    new_tags = [item for item in new_tags if item['tag'] != 'netbox-maintenance-window']
+                    log.info(f"DEBUG: new_tags(1): {pformat(new_tags)}")
                 else:
-                    log.info(f"No update_group for {name}")
-                    log.info(f"DEBUG: netbox_servers[name].custom_fields {pformat(dict(netbox_servers[name].custom_fields))}")
+                    new_tags = []
 
-            else:
-                log.info(f"No such server in {name} in netbox data")
+                new_tags.append({
+                    'tag': 'netbox-status',
+                    'value': netbox_servers[name].status['value']
+                })
 
-    def copy_netbox_tags_to_zabbix_tags(self, netbox_servers, zabbix_servers):
-        for name in zabbix_servers:
-            if name in netbox_servers and netbox_servers[name]:
                 if netbox_servers[name].tags:
                     log.info(f"Updating tags for {name}")
 
-                    if 'tags' in zabbix_servers[name]:
-                        tags = zabbix_servers[name]['tags']
-                        log.info(f"DEBUG: tags: {pformat(tags)}")
-                        new_tags = [item for item in tags if not item['tag'].startswith('netbox-tag')]
-                        log.info(f"DEBUG: new_tags(1): {pformat(new_tags)}")
-                    else:
-                        new_tags = []
                     for tag in netbox_servers[name].tags:
                         new_tags.append({
                             'tag': 'netbox-tag',
                             'value': tag['slug'],
                         })
                         log.info(f"DEBUG: new_tags(2): {pformat(new_tags)}")
-
-                        self.zabbix.host_update_tags(
-                            hostid=zabbix_servers[name]['hostid'],
-                            tags=new_tags,
-                        )
                 else:
                     log.info(f"No netbox tags for for {name}")
                     log.info(f"DEBUG: netbox_servers[name].tags {pformat(dict(netbox_servers[name].tags))}")
+
+                if 'update_group' in netbox_servers[name].custom_fields and netbox_servers[name].custom_fields['update_group']:
+                    log.info(f"Adding update_group to zabbix for {name}")
+
+                    new_tags.append({
+                        'tag': 'netbox-update-group',
+                        'value': netbox_servers[name].custom_fields['update_group'],
+                    })
+                else:
+                    log.info(f"No update_group for {name}")
+
+                if 'maintenance_group' in netbox_servers[name].custom_fields and netbox_servers[name].custom_fields['maintenance_group']:
+                    log.info(f"Adding maintenance_group to zabbix for {name}")
+
+                    new_tags.append({
+                        'tag': 'netbox-maintenance-group',
+                        'value': netbox_servers[name].custom_fields['maintenance_group'],
+                    })
+                else:
+                    log.info(f"No maintenance_group for {name}")
+
+                if 'maintenance_window' in netbox_servers[name].custom_fields and netbox_servers[name].custom_fields['maintenance_window']:
+                    log.info(f"Adding maintenance_window to zabbix for {name}")
+
+                    new_tags.append({
+                        'tag': 'netbox-maintenance-window',
+                        'value': netbox_servers[name].custom_fields['maintenance_window'],
+                    })
+                else:
+                    log.info(f"No maintenance_window for {name}")
+
+                log.info(f"DEBUG: new_tags(2): {pformat(new_tags)}")
+
+
+                self.zabbix.host_update_tags(
+                    hostid=zabbix_servers[name]['hostid'],
+                    tags=new_tags,
+                )
+
 
             else:
                 log.info(f"No such server in {name} in netbox data")
@@ -208,11 +220,8 @@ class SonicNetboxZabbix:
         self.copy_zabbix_hostid_to_netbox(
             zabbix_server_dict, netbox_server_dict)
 
-        self.copy_netbox_maint_update_info_to_zabbix_tags(
+        self.copy_netbox_info_to_zabbix_tags(
             netbox_server_dict, zabbix_server_dict)
-
-        self.copy_netbox_tags_to_zabbix_tags(netbox_server_dict, zabbix_server_dict)
-
 
 def main():
     """Run SonicNetboxZabbix cli with sys.argv from command line."""
