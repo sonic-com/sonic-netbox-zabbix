@@ -1,4 +1,5 @@
 import functools
+from pprint import pformat
 
 from zabbix_utils import ZabbixAPI
 
@@ -17,9 +18,20 @@ class SonicNetboxZabbix_Zabbix:
         api.login(token=self.config.zabbixtoken)
         self.api = api
 
+    def __del__(self):
+        self.log.info("Starting SonicNetboxZabbix_Zabbix instance deletion")
+        self.api.logout()
+        self.log.info("Done with SonicNetboxZabbix_Zabbix instance deletion")
+
+
     @functools.cache
     def get_hosts_all(self):
         return self.api.host.get(
             selectTags=["tag", "value"],
             selectInheritedTags=["tag", "value"],
         )
+
+    def host_update_tags(self, hostid, tags):
+        response = self.api.host.update(hostid=hostid, tags=tags)
+        self.log.info(f"DEBUG: response: {pformat(response)}")
+        return response
