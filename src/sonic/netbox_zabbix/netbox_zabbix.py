@@ -1,14 +1,13 @@
-import configargparse
 import functools
 import logging
 import logging.handlers
 import sys
+from pprint import pformat, pprint
 
-from pprint import pprint, pformat
+import configargparse
 
-from sonic.netbox_zabbix.zabbix import SonicNetboxZabbix_Zabbix
 from sonic.netbox_zabbix.netbox import SonicNetboxZabbix_Netbox
-
+from sonic.netbox_zabbix.zabbix import SonicNetboxZabbix_Zabbix
 
 try:
     from sonic.logger import setup_sonic_logger
@@ -45,7 +44,8 @@ class SonicNetboxZabbix:
                     format="%(name)s:%(funcName)s: %(message)s",
                 )
                 self.log = logging.getLogger("netbox_zabbix")
-                sysloghandler = logging.handlers.SysLogHandler(address="/dev/log")
+                sysloghandler = logging.handlers.SysLogHandler(
+                    address="/dev/log")
                 sysloghandler.setLevel(logging.INFO)
                 self.log.addHandler(sysloghandler)
             except Exception as e2:
@@ -81,8 +81,8 @@ class SonicNetboxZabbix:
         argparser.add(
             "-q", "--quiet", action="store_true", help="Show fewer logging messages"
         )
-        argparser.add("--netboxurl", "-n", required=True, help="URL for netbox")
-        argparser.add("--zabbixurl", "-z", required=True, help="URL for zabbix")
+        argparser.add("--netboxurl", "-n", required=True,help="URL for netbox")
+        argparser.add("--zabbixurl", "-z", required=True,help="URL for zabbix")
         argparser.add(
             "--netboxtoken", "-N", required=True, help="API auth token for Netbox"
         )
@@ -104,11 +104,50 @@ class SonicNetboxZabbix:
 
     def copy_zabbix_hostid_to_netbox(self, zabbix_servers, netbox_servers):
         for name in zabbix_servers:
-            if netbox_servers[name]:
-                netbox_servers[name]['custom_fields']['zabbix_host_id'] = int(zabbix_servers[name]['hostid'])
+            if name in netbox_servers and netbox_servers[name]:
+                netbox_servers[name]['custom_fields']['zabbix_host_id'] = int(
+                    zabbix_servers[name]['hostid'])
                 netbox_servers[name].save()
             else:
                 self.log.info(f"No such server {name} in netbox data")
+
+    def copy_netbox_maint_update_info_to_zabbix_tags(self, netbox_servers, zabbix_servers):
+
+        # 'tags': [{'tag': 'netbox-test', 'value': 'foo-bar'},
+        #          {'tag': 'netbox-test', 'value': 'foo'},
+        #          {'tag': 'netbox-test', 'value': 'bar'},
+        #          {'tag': 'netbox-test-2', 'value': 'foo'}],
+
+        for name in zabbix_servers:
+            if name in netbox_servers and netbox_servers[name]:
+                if netbox_servers[name].custom_fields['update_group']:
+                    self.log.info(f"Adding update_group to zabbix for {name}")
+
+                    if zabbix_servers[name]['tags']:
+                        tags = zabbix_servers[name]['tags']
+                        new_tags = [item for item in tags if item['tag'] != 'netbox-update-group']
+                    else:
+                        new_tags = []
+
+                    new_tags.append({
+                        'tag': 'netbox-update-group',
+                        'value': netbox_servers[name].custom_fields['update_group'],
+                    })
+                    response = self.zabbix.api.host.update(
+                        hostid=zabbix_servers[name]['hostid'],
+#                       tags=new_tags,
+                        tags={
+                            'tag': 'netbox-update-group',
+                            'value': netbox_servers[name].custom_fields['update_group'],
+                        },
+                    )
+                    self.log.info(f"DEBUG: response: {pformat(response)}")
+                else:
+                    self.log.info(f"No update_group for {name}")
+                    self.log.info(f"DEBUG: netbox_servers[name].custom_fields {pformat(dict(netbox_servers[name].custom_fields))}")
+
+            else:
+                self.log.info(f"No such server in {name} in netbox data")
 
     def run(self):
         """Run cli app with the given arguments."""
@@ -116,8 +155,8 @@ class SonicNetboxZabbix:
 
         self.log.info("Getting list of servers from Zabbix")
         zabbix_server_list = self.zabbix.get_hosts_all()
-        #self.log.info(f"DEBUG: zabbix_server_list: {pformat(zabbix_server_list)}")
-        self.log.info(f"DEBUG: zabbix_server_list[0]: {pformat(zabbix_server_list[0])}")
+        # self.log.info(f"DEBUG: zabbix_server_list: {pformat(zabbix_server_list)}")
+        # self.log.info(f"DEBUG: zabbix_server_list[0]: {pformat(zabbix_server_list[0])}")
 
         zabbix_server_dict = {}
         for zabbix_server in zabbix_server_list:
@@ -126,15 +165,20 @@ class SonicNetboxZabbix:
 
         self.log.info("Getting list of servers from Netbox")
         netbox_server_list = self.netbox.get_hosts_active_soc_server()
-        #self.log.info(f"DEBUG: netbox_server_list: {pformat(netbox_server_list)}")
-        self.log.info(f"DEBUG: netbox_server_list[0]: {pformat(dict(netbox_server_list[0]))}")
+        # self.log.info(f"DEBUG: netbox_server_list: {pformat(netbox_server_list)}")
+        # self.log.info(f"DEBUG: netbox_server_list[0]: {pformat(dict(netbox_server_list[0]))}")
 
         netbox_server_dict = {}
         for netbox_server in netbox_server_list:
             netbox_server_name = netbox_server['name']
             netbox_server_dict[netbox_server_name] = netbox_server
 
-        self.copy_zabbix_hostid_to_netbox(zabbix_server_dict, netbox_server_dict)
+        self.copy_zabbix_hostid_to_netbox(
+            zabbix_server_dict, netbox_server_dict)
+
+        self.copy_netbox_maint_update_info_to_zabbix_tags(
+            netbox_server_dict, zabbix_server_dict)
+
 
 def main():
     """Run SonicNetboxZabbix cli with sys.argv from command line."""
