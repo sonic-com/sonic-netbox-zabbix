@@ -225,6 +225,24 @@ class SonicNetboxZabbix:
             else:
                 log.info(f"No such server in {name} in netbox data")
 
+    def copy_netbox_info_to_zabbix_inventory(self, netbox_servers, zabbix_servers):
+        for name in zabbix_servers:
+            if name in netbox_servers and netbox_servers[name]:
+                inventory = {}
+
+                api_url = netbox_servers[name].url
+                inventory['url_a'] = api_url.replace("/api/", "/")
+
+                if inventory:
+                    self.zabbix.host_update_inventory(
+                        hostid = zabbix_servers[name]['hostid'],
+                        inventory=inventory,
+                    )
+                else:
+                    log.info(f"No inventory updates for {name}")
+
+            else:
+                log.info(f"No such server in {name} in netbox data")
 
     def run(self):
         """Run cli app with the given arguments."""
@@ -254,6 +272,9 @@ class SonicNetboxZabbix:
             zabbix_server_dict, netbox_server_dict)
 
         self.copy_netbox_info_to_zabbix_tags(
+            netbox_server_dict, zabbix_server_dict)
+
+        self.copy_netbox_info_to_zabbix_inventory(
             netbox_server_dict, zabbix_server_dict)
 
 def main():

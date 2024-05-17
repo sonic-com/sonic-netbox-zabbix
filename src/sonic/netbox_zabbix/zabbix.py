@@ -35,3 +35,8 @@ class SonicNetboxZabbix_Zabbix:
         response = self.api.host.update(hostid=hostid, tags=tags)
         self.log.info(f"DEBUG: response: {pformat(response)}")
         return response
+
+    def host_update_inventory(self, hostid, inventory):
+        response = self.api.host.update(hostid=hostid, inventory=inventory)
+        self.log.info(f"DEBUG: response: {pformat(response)}")
+        return response
