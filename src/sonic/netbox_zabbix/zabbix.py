@@ -29,6 +29,9 @@ class SonicNetboxZabbix_Zabbix:
         return self.api.host.get(
             selectTags=["tag", "value"],
             selectInheritedTags=["tag", "value"],
+            selectHostGroups=["groupid","name"],
+            selectMacros=["macro","value","description"],
+            selectParentTemplates=["templateid","name"],
         )
 
     def host_update_tags(self, hostid, tags):
