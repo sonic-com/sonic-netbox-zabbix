@@ -204,7 +204,7 @@ class SonicNetboxZabbix:
                     tags = [item for item in tags if not item['tag'].startswith('netbox-')]
                 else:
                     tags = []
-                log.info(f"DEBUG: new_tags(1): {pformat(new_tags)}")
+                log.info(f"DEBUG: tags(1): {pformat(tags)}")
 
                 tags.append({
                     'tag': 'netbox-status',
@@ -239,7 +239,7 @@ class SonicNetboxZabbix:
                             'tag': 'netbox-tag',
                             'value': tag['slug'],
                         })
-                        log.info(f"DEBUG: new_tags(2): {pformat(tags)}")
+                        log.info(f"DEBUG: tags(2): {pformat(tags)}")
                 else:
                     log.info(f"No netbox tags for for {name}")
                     log.info(f"DEBUG: srv.tags {pformat(dict(srv.tags))}")
@@ -253,26 +253,6 @@ class SonicNetboxZabbix:
                     })
                 else:
                     log.info(f"No update_group for {name}")
-
-                if 'maintenance_group' in srv.custom_fields and srv.custom_fields['maintenance_group']:
-                    log.info(f"Adding maintenance_group to zabbix for {name}")
-
-                    tags.append({
-                        'tag': 'netbox-maintenance-group',
-                        'value': srv.custom_fields['maintenance_group'],
-                    })
-                else:
-                    log.info(f"No maintenance_group for {name}")
-
-                if 'maintenance_window' in srv.custom_fields and srv.custom_fields['maintenance_window']:
-                    log.info(f"Adding maintenance_window to zabbix for {name}")
-
-                    tags.append({
-                        'tag': 'netbox-maintenance-window',
-                        'value': srv.custom_fields['maintenance_window'],
-                    })
-                else:
-                    log.info(f"No maintenance_window for {name}")
 
                 log.info(f"DEBUG: tags(2): {pformat(tags)}")
 
