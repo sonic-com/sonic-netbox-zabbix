@@ -117,6 +117,82 @@ class SonicNetboxZabbix:
             else:
                 log.info(f"No such server {name} in netbox data")
 
+    def copy_netbox_info_to_zabbix_macros(self, netbox_servers, zabbix_servers):
+        for name in zabbix_servers:
+            if name in netbox_servers and netbox_servers[name]:
+                srv = netbox_servers[name]
+
+                # Pull current macros in, minus the $NETBOX. macros
+                if 'macros' in zabbix_servers[name]:
+                    macros = zabbix_servers[name]['macros']
+                    log.info(f"DEBUG: macros(pre): {pformat(macros)}")
+                    macros = [item for item in macros if not item['macro'].startswith('{$NETBOX.')]
+                else:
+                    macros = []
+                log.info(f"DEBUG: macros(post): {pformat(macros)}")
+
+                macros.append({
+                    'macro': '{$NETBOX.STATUS}',
+                    'value': srv.status['value'],
+                    'description': srv.status['label']
+                })
+
+                macros.append({
+                    'macro': '{$NETBOX.PLATFORM}',
+                    'value': srv.platform['slug'],
+                    'description': srv.platform['display']
+                })
+
+                macros.append({
+                    'macro': '{$NETBOX.SITE}',
+                    'value': srv.site['slug'],
+                    'description': srv.site['display']
+                })
+
+                macros.append({
+                    'macro': '{$NETBOX.TENANT}',
+                    'value': srv.tenant['slug'],
+                    'description': srv.tenant['display']
+                })
+
+                macros.append({
+                    'macro': '{$NETBOX.ROLE}',
+                    'value': srv.role['slug'],
+                    'description': srv.role['display']
+                })
+
+                macros.append({
+                    'macro': '{$NETBOX.DATE.CREATED}',
+                    'value': srv.created,
+                    'description': "Date Netbox record created"
+                })
+
+                macros.append({
+                    'macro': '{$NETBOX.DATE.LAST_UPDATED}',
+                    'value': srv.last_updated,
+                    'description': "Date Netbox record last updated"
+                })
+
+                if 'update_group' in srv.custom_fields and srv.custom_fields['update_group']:
+                    log.info(f"Adding update_group to zabbix macro for {name}")
+
+                    macros.append({
+                        'macro': '{$NETBOX.UPDATE_GROUP}',
+                        'value': srv.custom_fields['update_group'],
+                    })
+                else:
+                    log.info(f"No update_group for {name}")
+
+                # Actually save changes #
+                if macros:
+                    log.info(f"Macros for {name}: {pformat(macros)}")
+                    self.zabbix.host_update_macros(
+                        hostid=zabbix_servers[name]['hostid'],
+                        macros=macros,
+                    )
+                else:
+                    log.info(f"No Macros updates for {name}")
+
 
     def copy_netbox_info_to_zabbix_tags(self, netbox_servers, zabbix_servers):
         for name in zabbix_servers:
@@ -228,12 +304,30 @@ class SonicNetboxZabbix:
     def copy_netbox_info_to_zabbix_inventory(self, netbox_servers, zabbix_servers):
         for name in zabbix_servers:
             if name in netbox_servers and netbox_servers[name]:
+                srv = netbox_servers[name]
                 inventory = {}
 
-                api_url = netbox_servers[name].url
+                api_url = srv.url
                 inventory['url_a'] = api_url.replace("/api/", "/")
 
+                if 'wiki_documentation' in srv.custom_fields and srv.custom_fields['wiki_documentation']:
+                    inventory['url_b'] = srv.custom_fields['wiki_documentation']
+
+                inventory['os_short'] = srv.platform['slug']
+                inventory['os_full'] = srv.platform['display']
+                inventory['deployment_status'] = srv.status['label']
+                inventory['date_hw_install'] = srv.created
+
+                if len(str(srv.comments)) >= 1:
+                    inventory['notes'] = srv.comments
+
+                if 'oob_ip' in srv and len(str(srv.oob_ip)) > 1:
+                    (inventory['oob_ip'], inventory['oob_netmask']) = srv.oob_ip['address'].split('/')
+
+
+                # If we did anything, update Zabbix
                 if inventory:
+                    log.info(f"Inventory for {name}: {pformat(inventory)}")
                     self.zabbix.host_update_inventory(
                         hostid = zabbix_servers[name]['hostid'],
                         inventory=inventory,
@@ -268,14 +362,16 @@ class SonicNetboxZabbix:
             netbox_server_name = netbox_server['name']
             netbox_server_dict[netbox_server_name] = netbox_server
 
-        self.copy_zabbix_hostid_to_netbox(
-            zabbix_server_dict, netbox_server_dict)
+        #self.copy_zabbix_hostid_to_netbox(
+        #    zabbix_server_dict, netbox_server_dict)
 
-        self.copy_netbox_info_to_zabbix_tags(
-            netbox_server_dict, zabbix_server_dict)
+        self.copy_netbox_info_to_zabbix_macros(netbox_server_dict, zabbix_server_dict)
 
-        self.copy_netbox_info_to_zabbix_inventory(
-            netbox_server_dict, zabbix_server_dict)
+#        self.copy_netbox_info_to_zabbix_tags(
+#            netbox_server_dict, zabbix_server_dict)
+
+#        self.copy_netbox_info_to_zabbix_inventory(
+#            netbox_server_dict, zabbix_server_dict)
 
 def main():
     """Run SonicNetboxZabbix cli with sys.argv from command line."""
