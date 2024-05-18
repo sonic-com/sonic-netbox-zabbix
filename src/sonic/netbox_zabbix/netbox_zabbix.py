@@ -120,6 +120,7 @@ class SonicNetboxZabbix:
     def copy_netbox_info_to_zabbix_macros(self, netbox_servers, zabbix_servers):
         for name in zabbix_servers:
             if name in netbox_servers and netbox_servers[name]:
+                log.info(f"TRACE: macros for {name}")
                 srv = netbox_servers[name]
 
                 # Pull current macros in, minus the $NETBOX. macros
@@ -197,6 +198,7 @@ class SonicNetboxZabbix:
     def copy_netbox_info_to_zabbix_tags(self, netbox_servers, zabbix_servers):
         for name in zabbix_servers:
             if name in netbox_servers and netbox_servers[name]:
+                log.info(f"TRACE: tags for {name}")
                 srv=netbox_servers[name]
                 if 'tags' in zabbix_servers[name]:
                     tags = zabbix_servers[name]['tags']
@@ -269,6 +271,7 @@ class SonicNetboxZabbix:
     def copy_netbox_info_to_zabbix_inventory(self, netbox_servers, zabbix_servers):
         for name in zabbix_servers:
             if name in netbox_servers and netbox_servers[name]:
+                log.info(f"TRACE: inventory for {name}")
                 srv = netbox_servers[name]
                 inventory = {}
 

@@ -30,7 +30,7 @@ class SonicNetboxZabbix_Zabbix:
             selectTags=["tag", "value"],
             selectInheritedTags=["tag", "value"],
             selectHostGroups=["groupid","name"],
-            selectMacros=["macro","value","description"],
+            selectMacros=["macro","value","description", "type"],
             selectParentTemplates=["templateid","name"],
         )
 
