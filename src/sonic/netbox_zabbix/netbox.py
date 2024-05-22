@@ -22,7 +22,6 @@ class SonicNetboxZabbix_Netbox:
         self.vms = self.api.virtualization.virtual_machines
         self.devices = self.api.dcim.devices
 
-
     ####################
     # Virtual Machines #
     ####################
