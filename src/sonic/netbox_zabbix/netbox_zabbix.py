@@ -306,12 +306,71 @@ class SonicNetboxZabbix:
             else:
                 log.info(f"No such server in {name} in netbox data")
 
+    def site_to_path(self, site) -> str:
+
+        # region / group / provider / tenant / site
+
+        # Base of all site paths: "Sites/"
+        path = "Sites"
+
+        if site.region and site.region.display:
+            path += f"/{site.region.display}"
+
+        if site.group and site.group.display:
+            path += f"/{site.group.display}"
+
+        if site.custom_fields['Provider'] and site.custom_fields['Provider']['display']:
+            path += f"/{site.custom_fields['Provider']['display']}"
+
+        if site.tenant and site.tenant.display:
+            path += f"/{site.tenant.display}"
+
+        # End of all site paths: specific site
+        path += f"/{site.display}"
+
+        return path
+
+    # TODO: remove
+    def copy_netbox_sites_regions_to_zabbix_hostgroups(self):
+        # TODO: filter to sites with devices or VMs?
+        nb_sites = self.netbox.get_sites_smart_filter()
+        log.info(f"DEBUG: nb_sites: {len(nb_sites)}")
+
+        for site in nb_sites:
+            path = self.site_to_path(site)
+
+            log.info(f"DEBUG: path: {path}")
+            self.netbox.site_get_or_create(path)
+
+    def copy_netbox_info_to_zabbix_hostgroups(self, zabbix_servers, netbox_servers):
+        for name in zabbix_servers:
+            if name in netbox_servers and netbox_servers[name]:
+                log.info(f"TRACE: groups for {name}")
+                nbsrv = netbox_servers[name]
+                zbsrv = zabbix_servers[name]
+                hostgroups = [item for item in zbsrv['hostgroups'] if not item['name'].startswith('Sites/')]
+                log.info(f"TRACE: hostgroups: {hostgroups}")
+                hostgroups = [{"groupid": item['groupid']} for item in hostgroups]
+
+                # sites
+                site = nbsrv.site
+                site.full_details()
+                hostgroup_path = self.site_to_path(site)
+                log.info(f"DEBUG: hostgroup_path: {hostgroup_path}")
+                new_hostgroup = self.zabbix.hostgroup_site_get_or_create(hostgroup_path)
+                log.info(f"DEBUG:new_hostgroup{new_hostgroup}")
+                hostgroups.append(new_hostgroup)
+
+                self.zabbix.host_update_hostgroups(zbsrv['hostid'], hostgroups)
+
+
     def run(self):
         """Run cli app with the given arguments."""
         log.info("Starting run()")
 
-        log.info("Getting list of servers from Zabbix")
+        log.info("Getting list(s) of servers from Zabbix")
         zabbix_server_list = self.zabbix.get_hosts_all()
+        zabbix_notdiscovered_list = self.zabbix.get_hosts_notdiscovered()
         # log.info(f"DEBUG: zabbix_server_list: {pformat(zabbix_server_list)}")
         log.info(f"DEBUG: zabbix_server_list[0]: {pformat(zabbix_server_list[0])}")
 
@@ -319,6 +378,12 @@ class SonicNetboxZabbix:
         for zabbix_server in zabbix_server_list:
             zabbix_server_name = zabbix_server['host']
             zabbix_server_dict[zabbix_server_name] = zabbix_server
+
+        zabbix_notdiscovered_dict = {}
+        for zabbix_server in zabbix_notdiscovered_list:
+            zabbix_server_name = zabbix_server['host']
+            zabbix_notdiscovered_dict[zabbix_server_name] = zabbix_server
+
 
         log.info("Getting list of servers from Netbox")
         netbox_server_list = self.netbox.get_hosts_active_soc_server()
@@ -330,16 +395,17 @@ class SonicNetboxZabbix:
             netbox_server_name = netbox_server['name']
             netbox_server_dict[netbox_server_name] = netbox_server
 
-        self.copy_zabbix_hostid_to_netbox(
-            zabbix_server_dict, netbox_server_dict)
+        self.copy_zabbix_hostid_to_netbox(zabbix_server_dict, netbox_server_dict)
 
         self.copy_netbox_info_to_zabbix_macros(netbox_server_dict, zabbix_server_dict)
 
-        self.copy_netbox_info_to_zabbix_tags(
-            netbox_server_dict, zabbix_server_dict)
+        self.copy_netbox_info_to_zabbix_tags(netbox_server_dict, zabbix_server_dict)
 
-        self.copy_netbox_info_to_zabbix_inventory(
-            netbox_server_dict, zabbix_server_dict)
+        self.copy_netbox_info_to_zabbix_inventory(netbox_server_dict, zabbix_server_dict)
+
+        # self.copy_netbox_sites_regions_to_zabbix_hostgroups()
+
+        self.copy_netbox_info_to_zabbix_hostgroups(zabbix_notdiscovered_dict, netbox_server_dict)
 
 def main():
     """Run SonicNetboxZabbix cli with sys.argv from command line."""

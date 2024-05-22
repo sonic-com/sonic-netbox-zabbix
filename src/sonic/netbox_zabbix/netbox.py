@@ -22,6 +22,7 @@ class SonicNetboxZabbix_Netbox:
         self.vms = self.api.virtualization.virtual_machines
         self.devices = self.api.dcim.devices
 
+
     ####################
     # Virtual Machines #
     ####################
@@ -60,3 +61,23 @@ class SonicNetboxZabbix_Netbox:
         vms = self.get_vms_active_soc_server()
         devices = self.get_devices_active_soc_server()
         return list(vms) + list(devices)
+
+    #####################
+    # Organization Info #
+    #####################
+
+    @functools.cache
+    def get_regions_all(self):
+        return self.api.dcim.regions.all()
+
+    @functools.cache
+    def get_sites_all(self):
+        return self.api.dcim.sites.all()
+
+    @functools.cache
+    def get_sites_smart_filter(self) -> list:
+        sites = []
+        for site in self.get_sites_all():
+            if site.device_count >= 1:
+                sites.append(site)
+        return sites
