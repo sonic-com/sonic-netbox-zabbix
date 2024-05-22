@@ -33,7 +33,7 @@ class SonicNetboxZabbix:
                 config = SonicNetboxZabbix._parseargs()
             except Exception as e:
                 print(
-                    f"An error occured parsing config files or command-line arguments: {str(e)}"
+                    f"An error occurred parsing config files or command-line arguments: {str(e)}"
                 )
                 raise
 
