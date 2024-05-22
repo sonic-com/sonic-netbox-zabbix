@@ -351,18 +351,6 @@ class SonicNetboxZabbix:
 
         return path
 
-    # TODO: remove
-    def copy_netbox_sites_regions_to_zabbix_hostgroups(self):
-        # TODO: filter to sites with devices or VMs?
-        nb_sites = self.netbox.get_sites_smart_filter()
-        log.info(f"DEBUG: nb_sites: {len(nb_sites)}")
-
-        for site in nb_sites:
-            path = self.site_to_path(site)
-
-            log.info(f"DEBUG: path: {path}")
-            self.netbox.site_get_or_create(path)
-
     def copy_netbox_info_to_zabbix_hostgroups(self, zabbix_servers, netbox_servers):
         for name in zabbix_servers:
             if name in netbox_servers and netbox_servers[name]:
@@ -429,8 +417,6 @@ class SonicNetboxZabbix:
         self.copy_netbox_info_to_zabbix_inventory(
             netbox_server_dict, zabbix_server_dict
         )
-
-        # self.copy_netbox_sites_regions_to_zabbix_hostgroups()
 
         self.copy_netbox_info_to_zabbix_hostgroups(
             zabbix_notdiscovered_dict, netbox_server_dict
