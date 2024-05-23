@@ -411,7 +411,7 @@ class SonicNetboxZabbix:
             zabbix_notdiscovered_dict[zabbix_server_name] = zabbix_server
 
         log.info("Getting list of servers from Netbox")
-        netbox_server_list = self.netbox.get_hosts_active_soc_server()
+        netbox_server_list = self.netbox.get_hosts_all()
         # log.info(f"DEBUG: netbox_server_list: {pformat(netbox_server_list)}")
         log.info(
             f"DEBUG: netbox_server_list[0]: {pformat(dict(netbox_server_list[0]))}"
