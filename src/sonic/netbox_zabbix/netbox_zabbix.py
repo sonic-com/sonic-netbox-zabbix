@@ -370,6 +370,13 @@ class SonicNetboxZabbix:
                 log.info(f"DEBUG:new_hostgroup{new_hostgroup}")
                 hostgroups.append(new_hostgroup)
 
+                # Tenant
+                if nbsrv.tenant and nbsrv.tenant['display']:
+                    log.info(f"DEBUG: adding hostgroup {nbsrv.tenant['display']}")
+                    new_hostgroup = self.zabbix.hostgroup_site_get_or_create(f"Sonic/{nbsrv.tenant['display']}")
+                    hostgroups.append(new_hostgroup)
+
+                log.info(f"DEBUG: setting hostgroups: {hostgroups}")
                 self.zabbix.host_update_hostgroups(zbsrv["hostid"], hostgroups)
 
     def run(self):
