@@ -331,25 +331,22 @@ class SonicNetboxZabbix:
 
         # region / group / provider / tenant / site
 
-        # Base of all site paths: "Sites/"
-        path = "Sites"
+        parts = ['Sites']
 
         if site.region and site.region.display:
-            path += f"/{site.region.display}"
+            parts.append(site.region.display)
 
-        if site.group and site.group.display:
-            path += f"/{site.group.display}"
+        # if site.group and site.group.display:
+        #     parts.append(site.group.display)
 
-        if site.custom_fields["Provider"] and site.custom_fields["Provider"]["display"]:
-            path += f"/{site.custom_fields['Provider']['display']}"
+        # if site.custom_fields["Provider"] and site.custom_fields["Provider"]["display"]:
+        #     parts.append(site.custom_fields['Provider']['display'])
 
-        if site.tenant and site.tenant.display:
-            path += f"/{site.tenant.display}"
 
         # End of all site paths: specific site
-        path += f"/{site.display}"
+        parts.append(site.display)
 
-        return path
+        return "/".join(parts)
 
     def copy_netbox_info_to_zabbix_hostgroups(self, zabbix_servers, netbox_servers):
         for name in zabbix_servers:
