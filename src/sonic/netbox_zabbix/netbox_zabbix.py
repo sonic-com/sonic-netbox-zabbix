@@ -244,7 +244,9 @@ class SonicNetboxZabbix:
                     tags.append({"tag": "netbox-status", "value": srv.status["value"]})
 
                 if srv.platform and srv.platform["slug"]:
-                    tags.append({"tag": "netbox-platform", "value": srv.platform["slug"]})
+                    tags.append(
+                        {"tag": "netbox-platform", "value": srv.platform["slug"]}
+                    )
 
                 if srv.site and srv.site["slug"]:
                     tags.append({"tag": "netbox-site", "value": srv.site["slug"]})
@@ -306,8 +308,8 @@ class SonicNetboxZabbix:
                 inventory["url_a"] = api_url.replace("/api/", "/")
 
                 if (
-                    srv.custom_fields and
-                    "wiki_documentation" in srv.custom_fields
+                    srv.custom_fields
+                    and "wiki_documentation" in srv.custom_fields
                     and srv.custom_fields["wiki_documentation"]
                 ):
                     inventory["url_b"] = srv.custom_fields["wiki_documentation"]
