@@ -353,12 +353,19 @@ class SonicNetboxZabbix:
                 log.info(f"TRACE: groups for {name}")
                 nbsrv = netbox_servers[name]
                 zbsrv = zabbix_servers[name]
+                hostgroups = zbsrv["hostgroups"]
+                log.info(f"TRACE: hostgroups:unfiltered: {hostgroups}")
                 hostgroups = [
                     item
-                    for item in zbsrv["hostgroups"]
+                    for item in hostgroups
                     if not item["name"].startswith("Sites/")
                 ]
-                log.info(f"TRACE: hostgroups: {hostgroups}")
+                hostgroups = [
+                    item
+                    for item in hostgroups
+                    if not item["name"].startswith("Sonic/")
+                ]
+                log.info(f"TRACE: hostgroups:filtered: {hostgroups}")
                 hostgroups = [{"groupid": item["groupid"]} for item in hostgroups]
 
                 # sites
@@ -393,12 +400,18 @@ class SonicNetboxZabbix:
 
         zabbix_server_dict = {}
         for zabbix_server in zabbix_server_list:
-            zabbix_server_name = zabbix_server["host"]
+            if zabbix_server["host"][0].isdigit(): #UUID things like ESX hosts
+                zabbix_server_name = zabbix_server["name"]
+            else:
+                zabbix_server_name = zabbix_server["host"]
             zabbix_server_dict[zabbix_server_name] = zabbix_server
 
         zabbix_notdiscovered_dict = {}
         for zabbix_server in zabbix_notdiscovered_list:
-            zabbix_server_name = zabbix_server["host"]
+            if zabbix_server["host"][0].isdigit(): #UUID things like ESX hosts
+                zabbix_server_name = zabbix_server["name"]
+            else:
+                zabbix_server_name = zabbix_server["host"]
             zabbix_notdiscovered_dict[zabbix_server_name] = zabbix_server
 
         log.info("Getting list of servers from Netbox")
