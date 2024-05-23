@@ -139,45 +139,50 @@ class SonicNetboxZabbix:
                     macros = []
                 log.info(f"DEBUG: macros(post): {pformat(macros)}")
 
-                macros.append(
-                    {
-                        "macro": "{$NETBOX.STATUS}",
-                        "value": srv.status["value"],
-                        "description": srv.status["label"],
-                    }
-                )
+                if srv.status and srv.status["value"] and srv.status["label"]:
+                    macros.append(
+                        {
+                            "macro": "{$NETBOX.STATUS}",
+                            "value": srv.status["value"],
+                            "description": srv.status["label"],
+                        }
+                    )
 
-                macros.append(
-                    {
-                        "macro": "{$NETBOX.PLATFORM}",
-                        "value": srv.platform["slug"],
-                        "description": srv.platform["display"],
-                    }
-                )
+                if srv.platform and srv.platform["slug"] and srv.platform["display"]:
+                    macros.append(
+                        {
+                            "macro": "{$NETBOX.PLATFORM}",
+                            "value": srv.platform["slug"],
+                            "description": srv.platform["display"],
+                        }
+                    )
 
-                macros.append(
-                    {
-                        "macro": "{$NETBOX.SITE}",
-                        "value": srv.site["slug"],
-                        "description": srv.site["display"],
-                    }
-                )
+                if srv.site and srv.site["slug"] and srv.site["display"]:
+                    macros.append(
+                        {
+                            "macro": "{$NETBOX.SITE}",
+                            "value": srv.site["slug"],
+                            "description": srv.site["display"],
+                        }
+                    )
 
-                macros.append(
-                    {
-                        "macro": "{$NETBOX.TENANT}",
-                        "value": srv.tenant["slug"],
-                        "description": srv.tenant["display"],
-                    }
-                )
+                if srv.tenant and srv.tenant["slug"] and srv.tenant["display"]:
+                    macros.append(
+                        {
+                            "macro": "{$NETBOX.TENANT}",
+                            "value": srv.tenant["slug"],
+                            "description": srv.tenant["display"],
+                        }
+                    )
 
-                macros.append(
-                    {
-                        "macro": "{$NETBOX.ROLE}",
-                        "value": srv.role["slug"],
-                        "description": srv.role["display"],
-                    }
-                )
+                if srv.role and srv.role["slug"] and srv.role["display"]:
+                    macros.append(
+                        {
+                            "macro": "{$NETBOX.ROLE}",
+                            "value": srv.role["slug"],
+                            "description": srv.role["display"],
+                        }
+                    )
 
                 macros.append(
                     {
@@ -235,15 +240,20 @@ class SonicNetboxZabbix:
                     tags = []
                 log.info(f"DEBUG: tags(1): {pformat(tags)}")
 
-                tags.append({"tag": "netbox-status", "value": srv.status["value"]})
+                if srv.status and srv.status["value"]:
+                    tags.append({"tag": "netbox-status", "value": srv.status["value"]})
 
-                tags.append({"tag": "netbox-platform", "value": srv.platform["slug"]})
+                if srv.platform and srv.platform["slug"]:
+                    tags.append({"tag": "netbox-platform", "value": srv.platform["slug"]})
 
-                tags.append({"tag": "netbox-site", "value": srv.site["slug"]})
+                if srv.site and srv.site["slug"]:
+                    tags.append({"tag": "netbox-site", "value": srv.site["slug"]})
 
-                tags.append({"tag": "netbox-tenant", "value": srv.tenant["slug"]})
+                if srv.tenant and srv.tenant["slug"]:
+                    tags.append({"tag": "netbox-tenant", "value": srv.tenant["slug"]})
 
-                tags.append({"tag": "netbox-role", "value": srv.role["slug"]})
+                if srv.role and srv.role["slug"]:
+                    tags.append({"tag": "netbox-role", "value": srv.role["slug"]})
 
                 if srv.tags:
                     log.info(f"Updating tags for {name}")
@@ -296,14 +306,18 @@ class SonicNetboxZabbix:
                 inventory["url_a"] = api_url.replace("/api/", "/")
 
                 if (
+                    srv.custom_fields and
                     "wiki_documentation" in srv.custom_fields
                     and srv.custom_fields["wiki_documentation"]
                 ):
                     inventory["url_b"] = srv.custom_fields["wiki_documentation"]
 
-                inventory["os_short"] = srv.platform["slug"]
-                inventory["os_full"] = srv.platform["display"]
-                inventory["deployment_status"] = srv.status["label"]
+                if srv.platform and srv.platform["slug"]:
+                    inventory["os_short"] = srv.platform["slug"]
+                if srv.platform and srv.platform["display"]:
+                    inventory["os_full"] = srv.platform["display"]
+                if srv.status and srv.status["label"]:
+                    inventory["deployment_status"] = srv.status["label"]
                 inventory["date_hw_install"] = srv.created
 
                 if len(str(srv.comments)) >= 1:
