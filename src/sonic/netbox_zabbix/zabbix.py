@@ -66,7 +66,7 @@ class SonicNetboxZabbix_Zabbix:
             groupid = sites[0]["groupid"]
         else:
             self.log.info(f"TRACE:create group:{name}")
-            groupid = self.api.hostgroup.create(name=name)['groupids'][0]
+            groupid = self.api.hostgroup.create(name=name)["groupids"][0]
 
         self.log.info(f"DEBUG:returning groupid:{groupid}")
         return {"groupid": int(groupid)}

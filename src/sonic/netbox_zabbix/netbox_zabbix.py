@@ -331,7 +331,7 @@ class SonicNetboxZabbix:
 
         # region / group / provider / tenant / site
 
-        parts = ['Sites']
+        parts = ["Sites"]
 
         if site.region and site.region.display:
             parts.append(site.region.display)
@@ -341,7 +341,6 @@ class SonicNetboxZabbix:
 
         # if site.custom_fields["Provider"] and site.custom_fields["Provider"]["display"]:
         #     parts.append(site.custom_fields['Provider']['display'])
-
 
         # End of all site paths: specific site
         parts.append(site.display)
