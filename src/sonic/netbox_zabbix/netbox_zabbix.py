@@ -269,13 +269,20 @@ class SonicNetboxZabbix:
                     log.info(f"Updating tags for {name}")
 
                     for tag in srv.tags:
-                        tags.append(
-                            {
-                                "tag": "netbox-tag",
-                                "value": tag["slug"],
-                            }
-                        )
-                        log.debug(f"DEBUG: tags(2): {pformat(tags)}")
+                        if tag["slug"] == "zabbix-alerting-nopage":
+                            new_tag = {
+                                    "tag": "sonic-alerting",
+                                    "value": "nopage"
+                                    }
+                            if new_tag not in tags:
+                                tags.append(new_tag)
+                        else:
+                            tags.append({
+                                    "tag": "netbox-tag",
+                                    "value": tag["slug"],
+                                })
+                    log.debug(f"DEBUG: tags(2): {pformat(tags)}")
+
                 else:
                     log.warning(f"No netbox tags for for {name}")
                     log.debug(f"DEBUG: srv.tags {pformat(dict(srv.tags))}")
