@@ -106,6 +106,19 @@ class SonicNetboxZabbix:
             "--zabbixtoken", "-Z", required=True, help="API auth token for Zabbix"
         )
 
+        argparser.add(
+            "--skip-macros", action="store_true", help="Don't update Zabbix Macros from netbox data"
+        )
+        argparser.add(
+            "--skip-tags", action="store_true", help="Don't update Zabbix Tags from netbox data"
+        )
+        argparser.add(
+            "--skip-inventory", action="store_true", help="Don't update Zabbix Inventory from netbox data"
+        )
+        argparser.add(
+            "--skip-hostgroups", action="store_true", help="Don't update Zabbix Hostgroups from netbox data"
+        )
+
         return argparser.parse_args()
 
     def _zabbix_login(self):
@@ -233,6 +246,11 @@ class SonicNetboxZabbix:
                 else:
                     log.warning(f"No Macros updates for {name}")
 
+    def add_tag_nodupe(self, tags, new_tag):
+        if new_tag not in tags:
+            tags.append(new_tag)
+        return tags
+
     def copy_netbox_info_to_zabbix_tags(self, netbox_servers, zabbix_servers):
         for name in zabbix_servers:
             if name in netbox_servers and netbox_servers[name]:
@@ -250,6 +268,25 @@ class SonicNetboxZabbix:
 
                 if srv.status and srv.status["value"]:
                     tags.append({"tag": "netbox-status", "value": srv.status["value"]})
+                    # If planned, don't notify at all
+                    if srv.status["value"] == "planned":
+                        tags = self.add_tag_nodupe(tags,{
+                                    "tag": "sonic-alerting",
+                                    "value": "nonotice"
+                                    })
+                    # If staged, don't page
+                    elif srv.status["value"] == "staged":
+                        tags = self.add_tag_nodupe(tags,{
+                                    "tag": "sonic-alerting",
+                                    "value": "nopage"
+                                    })
+                    # If server is active, don't let it be nopage/nonotice unless explicitly
+                    # set that way in Netbox (further down will get added back if tag is set)
+                    elif srv.status["value"] == "active":
+                        tags = [item for item in tags if not item["tag"] == "sonic-alerting"]
+
+                log.debug(f"DEBUG: tags(2): {pformat(tags)}")
+
 
                 if srv.platform and srv.platform["slug"]:
                     tags.append(
@@ -265,17 +302,23 @@ class SonicNetboxZabbix:
                 if srv.role and srv.role["slug"]:
                     tags.append({"tag": "netbox-role", "value": srv.role["slug"]})
 
+                log.debug(f"DEBUG: tags(3): {pformat(tags)}")
+
+                if srv.custom_fields:
+                    if "zabbix_alert_routing" in srv.custom_fields and srv.custom_fields["zabbix_alert_routing"]:
+                        # Remove existing sonic-alert-routing tag
+                        tags = [item for item in tags if not item["tag"] == "sonic-alert-routing"]
+                        tags.append({"tag": "sonic-alert-routing", "value": srv.custom_fields["zabbix_alert_routing"]})
+
                 if srv.tags:
                     log.info(f"Updating tags for {name}")
 
                     for tag in srv.tags:
-                        if tag["slug"] == "zabbix-alerting-nopage":
-                            new_tag = {
+                        if tag["slug"] == "zabbix-alerting-nopage" or tag["slug"] == "soc-nopage":
+                            tags = self.add_tag_nodupe(tags,{
                                     "tag": "sonic-alerting",
                                     "value": "nopage"
-                                    }
-                            if new_tag not in tags:
-                                tags.append(new_tag)
+                                    })
                         else:
                             tags.append({
                                     "tag": "netbox-tag",
@@ -302,7 +345,7 @@ class SonicNetboxZabbix:
                 else:
                     log.warning(f"No update_group for {name}")
 
-                log.debug(f"DEBUG: tags(2): {pformat(tags)}")
+                log.debug(f"DEBUG: tags(final): {pformat(tags)}")
 
                 self.zabbix.host_update_tags(
                     hostid=zabbix_servers[name]["hostid"],
@@ -455,17 +498,21 @@ class SonicNetboxZabbix:
 
         self.copy_zabbix_hostid_to_netbox(zabbix_server_dict, netbox_server_dict)
 
-        self.copy_netbox_info_to_zabbix_macros(netbox_server_dict, zabbix_server_dict)
+        if not config.skip_macros:
+            self.copy_netbox_info_to_zabbix_macros(netbox_server_dict, zabbix_server_dict)
 
-        self.copy_netbox_info_to_zabbix_tags(netbox_server_dict, zabbix_server_dict)
+        if not config.skip_tags:
+            self.copy_netbox_info_to_zabbix_tags(netbox_server_dict, zabbix_server_dict)
 
-        self.copy_netbox_info_to_zabbix_inventory(
-            netbox_server_dict, zabbix_server_dict
-        )
+        if not config.skip_inventory:
+            self.copy_netbox_info_to_zabbix_inventory(
+                netbox_server_dict, zabbix_server_dict
+            )
 
-        self.copy_netbox_info_to_zabbix_hostgroups(
-            zabbix_notdiscovered_dict, netbox_server_dict
-        )
+        if not config.skip_hostgroups:
+            self.copy_netbox_info_to_zabbix_hostgroups(
+                zabbix_notdiscovered_dict, netbox_server_dict
+            )
 
 
 def main():
