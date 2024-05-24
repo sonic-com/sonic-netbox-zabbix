@@ -516,7 +516,7 @@ class SonicNetboxZabbix:
 
         netbox_server_dict = {}
         for netbox_server in netbox_server_list:
-            netbox_server_name = netbox_server["name"]
+            netbox_server_name = netbox_server["name"].lower()
             netbox_server_dict[netbox_server_name] = netbox_server
 
         self.copy_zabbix_hostid_to_netbox(zabbix_server_dict, netbox_server_dict)
