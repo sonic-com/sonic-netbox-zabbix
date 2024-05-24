@@ -21,7 +21,6 @@ class SonicNetboxZabbix_Zabbix:
     def __del__(self):
         self.api.logout()
 
-
     @functools.cache
     def get_hosts_all(self):
         return self.api.host.get(

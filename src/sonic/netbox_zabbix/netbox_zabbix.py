@@ -88,7 +88,11 @@ class SonicNetboxZabbix:
         )
 
         argparser.add(
-            "-v", "--verbose", action="count", default=0, help="Show more logging messages. More -v for more logging"
+            "-v",
+            "--verbose",
+            action="count",
+            default=0,
+            help="Show more logging messages. More -v for more logging",
         )
         argparser.add(
             "-q", "--quiet", action="store_true", help="Show fewer logging messages"
