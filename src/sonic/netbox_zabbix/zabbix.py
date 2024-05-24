@@ -19,9 +19,8 @@ class SonicNetboxZabbix_Zabbix:
         self.api = api
 
     def __del__(self):
-        self.log.info("Starting SonicNetboxZabbix_Zabbix instance deletion")
         self.api.logout()
-        self.log.info("Done with SonicNetboxZabbix_Zabbix instance deletion")
+
 
     @functools.cache
     def get_hosts_all(self):
@@ -60,34 +59,34 @@ class SonicNetboxZabbix_Zabbix:
         sites = self.api.hostgroup.get(
             filter={"name": name},
         )
-        self.log.info(f"DEBUG:sites:{name}:{sites}")
+        self.log.debug(f"DEBUG:sites:{name}:{sites}")
         if len(sites) >= 1:
-            self.log.info(f"DEBUG:sites[0]:{sites[0]}")
+            self.log.debug(f"DEBUG:sites[0]:{sites[0]}")
             groupid = sites[0]["groupid"]
         else:
-            self.log.info(f"TRACE:create group:{name}")
+            self.log.debug(f"TRACE:create group:{name}")
             groupid = self.api.hostgroup.create(name=name)["groupids"][0]
 
-        self.log.info(f"DEBUG:returning groupid:{groupid}")
+        self.log.debug(f"DEBUG:returning groupid:{groupid}")
         return {"groupid": int(groupid)}
 
     def host_update_tags(self, hostid, tags):
         response = self.api.host.update(hostid=hostid, tags=tags)
-        self.log.info(f"DEBUG: response: {pformat(response)}")
+        self.log.debug(f"DEBUG: response: {pformat(response)}")
         return response
 
     def host_update_inventory(self, hostid, inventory):
         response = self.api.host.update(hostid=hostid, inventory=inventory)
-        self.log.info(f"DEBUG: response: {pformat(response)}")
+        self.log.debug(f"DEBUG: response: {pformat(response)}")
         return response
 
     def host_update_macros(self, hostid, macros):
         response = self.api.host.update(hostid=hostid, macros=macros)
-        self.log.info(f"DEBUG: response: {pformat(response)}")
+        self.log.debug(f"DEBUG: response: {pformat(response)}")
         return response
 
     def host_update_hostgroups(self, hostid, hostgroups):
-        self.log.info(f"TRACE:hostid={hostid},hostgroups={hostgroups}")
+        self.log.debug(f"TRACE:hostid={hostid},hostgroups={hostgroups}")
         response = self.api.host.update(hostid=hostid, groups=hostgroups)
-        self.log.info(f"DEBUG: response: {pformat(response)}")
+        self.log.debug(f"DEBUG: response: {pformat(response)}")
         return response
