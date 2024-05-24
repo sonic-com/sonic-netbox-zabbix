@@ -69,7 +69,7 @@ class SonicNetboxZabbix:
             log.setLevel(logging.ERROR)
         self.log = log
 
-        log.info("Starting Sonic Netbox Zabbix Sync")
+        log.debug("Starting Sonic Netbox Zabbix Sync")
 
         self._zabbix_login()
         self._netbox_login()
@@ -131,12 +131,12 @@ class SonicNetboxZabbix:
 
     def _zabbix_login(self):
         """Log into Zabbix, creating self.zabbix self"""
-        log.info("Logging into Zabbix")
+        log.debug("Logging into Zabbix")
         self.zabbix = SonicNetboxZabbix_Zabbix(log, config)
 
     def _netbox_login(self):
         """Log into Netbox and add napi to self"""
-        log.info("Logging into Netbox")
+        log.debug("Logging into Netbox")
         self.netbox = SonicNetboxZabbix_Netbox(log, config)
 
     def copy_zabbix_hostid_to_netbox(self, zabbix_servers, netbox_servers):
@@ -147,7 +147,7 @@ class SonicNetboxZabbix:
                 )
                 netbox_servers[name].save()
             else:
-                log.warning(f"No such server {name} in netbox data")
+                log.info(f"No such server {name} in netbox data")
 
     def copy_netbox_info_to_zabbix_macros(self, netbox_servers, zabbix_servers):
         for name in zabbix_servers:
@@ -158,7 +158,7 @@ class SonicNetboxZabbix:
                 # Pull current macros in, minus the $NETBOX. macros
                 if "macros" in zabbix_servers[name]:
                     macros = zabbix_servers[name]["macros"]
-                    log.debug(f"DEBUG: macros(pre): {pformat(macros)}")
+                    log.debug(f"macros(pre): {pformat(macros)}")
                     macros = [
                         item
                         for item in macros
@@ -166,7 +166,7 @@ class SonicNetboxZabbix:
                     ]
                 else:
                     macros = []
-                log.debug(f"DEBUG: macros(post): {pformat(macros)}")
+                log.debug(f"macros(post): {pformat(macros)}")
 
                 if srv.status and srv.status["value"] and srv.status["label"]:
                     macros.append(
@@ -266,13 +266,13 @@ class SonicNetboxZabbix:
                 srv = netbox_servers[name]
                 if "tags" in zabbix_servers[name]:
                     tags = zabbix_servers[name]["tags"]
-                    log.debug(f"DEBUG: tags: {pformat(tags)}")
+                    log.debug(f"{name} tags(original): {pformat(tags)}")
                     tags = [
                         item for item in tags if not item["tag"].startswith("netbox-")
                     ]
                 else:
                     tags = []
-                log.debug(f"DEBUG: tags(1): {pformat(tags)}")
+                log.debug(f"{name} tags(1): {pformat(tags)}")
 
                 if srv.status and srv.status["value"]:
                     tags.append({"tag": "netbox-status", "value": srv.status["value"]})
@@ -293,7 +293,7 @@ class SonicNetboxZabbix:
                             item for item in tags if not item["tag"] == "sonic-alerting"
                         ]
 
-                log.debug(f"DEBUG: tags(2): {pformat(tags)}")
+                log.debug(f"{name} tags(2): {pformat(tags)}")
 
                 if srv.platform and srv.platform["slug"]:
                     tags.append(
@@ -309,7 +309,7 @@ class SonicNetboxZabbix:
                 if srv.role and srv.role["slug"]:
                     tags.append({"tag": "netbox-role", "value": srv.role["slug"]})
 
-                log.debug(f"DEBUG: tags(3): {pformat(tags)}")
+                log.debug(f"{name} tags(3): {pformat(tags)}")
 
                 if srv.custom_fields:
                     if (
@@ -330,7 +330,7 @@ class SonicNetboxZabbix:
                         )
 
                 if srv.tags:
-                    log.info(f"Updating tags for {name}")
+                    log.info(f"{name}: Updating tags")
 
                     for tag in srv.tags:
                         if (
@@ -347,11 +347,11 @@ class SonicNetboxZabbix:
                                     "value": tag["slug"],
                                 }
                             )
-                    log.debug(f"DEBUG: tags(2): {pformat(tags)}")
+                    log.debug(f"{name} tags(4): {pformat(tags)}")
 
                 else:
-                    log.warning(f"No netbox tags for for {name}")
-                    log.debug(f"DEBUG: srv.tags {pformat(dict(srv.tags))}")
+                    log.warning(f"{name}: No netbox tags")
+                    log.debug(f"{name} srv.tags {pformat(dict(srv.tags))}")
 
                 if (
                     "update_group" in srv.custom_fields
@@ -366,9 +366,9 @@ class SonicNetboxZabbix:
                         }
                     )
                 else:
-                    log.warning(f"No update_group for {name}")
+                    log.warning(f"{name}: No update_group for")
 
-                log.debug(f"DEBUG: tags(final): {pformat(tags)}")
+                log.debug(f"{name} tags(final): {pformat(tags)}")
 
                 self.zabbix.host_update_tags(
                     hostid=zabbix_servers[name]["hostid"],
@@ -376,12 +376,12 @@ class SonicNetboxZabbix:
                 )
 
             else:
-                log.warning(f"No such server in {name} in netbox data")
+                log.warning(f"{name}: No such server in {name} in netbox data")
 
     def copy_netbox_info_to_zabbix_inventory(self, netbox_servers, zabbix_servers):
         for name in zabbix_servers:
             if name in netbox_servers and netbox_servers[name]:
-                log.debug(f"TRACE: inventory for {name}")
+                log.debug(f"TRACE:{name}: inventory")
                 srv = netbox_servers[name]
                 inventory = {}
 
@@ -413,16 +413,16 @@ class SonicNetboxZabbix:
 
                 # If we did anything, update Zabbix
                 if inventory:
-                    log.debug(f"Inventory for {name}: {pformat(inventory)}")
+                    log.debug(f"{name}:Inventory: {pformat(inventory)}")
                     self.zabbix.host_update_inventory(
                         hostid=zabbix_servers[name]["hostid"],
                         inventory=inventory,
                     )
                 else:
-                    log.warning(f"No inventory updates for {name}")
+                    log.warning(f"{name}No inventory updates")
 
             else:
-                log.warning(f"No such server in {name} in netbox data")
+                log.warning(f"{name}: No such host in netbox data")
 
     def site_to_path(self, site) -> str:
 
@@ -447,49 +447,49 @@ class SonicNetboxZabbix:
     def copy_netbox_info_to_zabbix_hostgroups(self, zabbix_servers, netbox_servers):
         for name in zabbix_servers:
             if name in netbox_servers and netbox_servers[name]:
-                log.debug(f"TRACE: groups for {name}")
+                log.debug(f"TRACE:{name}:groups")
                 nbsrv = netbox_servers[name]
                 zbsrv = zabbix_servers[name]
                 hostgroups = zbsrv["hostgroups"]
-                log.debug(f"TRACE: hostgroups:unfiltered: {hostgroups}")
+                log.debug(f"TRACE:{name}: hostgroups:unfiltered: {hostgroups}")
                 hostgroups = [
                     item for item in hostgroups if not item["name"].startswith("Sites/")
                 ]
                 hostgroups = [
                     item for item in hostgroups if not item["name"].startswith("Sonic/")
                 ]
-                log.debug(f"TRACE: hostgroups:filtered: {hostgroups}")
+                log.debug(f"TRACE:{name}: hostgroups:filtered: {hostgroups}")
                 hostgroups = [{"groupid": item["groupid"]} for item in hostgroups]
 
                 # sites
                 site = nbsrv.site
                 site.full_details()
                 hostgroup_path = self.site_to_path(site)
-                log.debug(f"DEBUG: hostgroup_path: {hostgroup_path}")
+                log.debug(f"{name}:hostgroup_path: {hostgroup_path}")
                 new_hostgroup = self.zabbix.hostgroup_site_get_or_create(hostgroup_path)
-                log.debug(f"DEBUG:new_hostgroup{new_hostgroup}")
+                log.debug(f"{name}:new_hostgroup{new_hostgroup}")
                 hostgroups.append(new_hostgroup)
 
                 # Tenant
                 if nbsrv.tenant and nbsrv.tenant["display"]:
-                    log.debug(f"DEBUG: adding hostgroup {nbsrv.tenant['display']}")
+                    log.debug(f"{name}:adding hostgroup {nbsrv.tenant['display']}")
                     new_hostgroup = self.zabbix.hostgroup_site_get_or_create(
                         f"Sonic/{nbsrv.tenant['display']}"
                     )
                     hostgroups.append(new_hostgroup)
 
-                log.debug(f"DEBUG: setting hostgroups: {hostgroups}")
+                log.debug(f"{name}:setting hostgroups: {hostgroups}")
                 self.zabbix.host_update_hostgroups(zbsrv["hostid"], hostgroups)
 
     def run(self):
         """Run cli app with the given arguments."""
-        log.info("Starting run()")
+        log.debug("Starting run()")
 
         log.debug("Getting list(s) of servers from Zabbix")
         zabbix_server_list = self.zabbix.get_hosts_all()
         zabbix_notdiscovered_list = self.zabbix.get_hosts_notdiscovered()
         # log.info(f"DEBUG: zabbix_server_list: {pformat(zabbix_server_list)}")
-        log.debug(f"DEBUG: zabbix_server_list[0]: {pformat(zabbix_server_list[0])}")
+        log.debug(f"zabbix_server_list[0]: {pformat(zabbix_server_list[0])}")
 
         zabbix_server_dict = {}
         for zabbix_server in zabbix_server_list:

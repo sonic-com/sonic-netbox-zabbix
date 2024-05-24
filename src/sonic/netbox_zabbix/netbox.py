@@ -12,7 +12,7 @@ class SonicNetboxZabbix_Netbox:
         self.log = logger
         self.config = config
 
-        self.log.info("Logging into Netbox")
+        self.log.debug("Logging into Netbox")
         self.api = pynetbox.api(
             self.config.netboxurl,
             token=self.config.netboxtoken,

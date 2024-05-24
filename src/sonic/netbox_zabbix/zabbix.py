@@ -58,9 +58,9 @@ class SonicNetboxZabbix_Zabbix:
         sites = self.api.hostgroup.get(
             filter={"name": name},
         )
-        self.log.debug(f"DEBUG:sites:{name}:{sites}")
+        self.log.debug(f"{name}:sites:{sites}")
         if len(sites) >= 1:
-            self.log.debug(f"DEBUG:sites[0]:{sites[0]}")
+            self.log.debug(f"{name}:sites[0]:{sites[0]}")
             groupid = sites[0]["groupid"]
         else:
             self.log.debug(f"TRACE:create group:{name}")
@@ -71,21 +71,21 @@ class SonicNetboxZabbix_Zabbix:
 
     def host_update_tags(self, hostid, tags):
         response = self.api.host.update(hostid=hostid, tags=tags)
-        self.log.debug(f"DEBUG: response: {pformat(response)}")
+        self.log.debug(f"{hostid}:response: {pformat(response)}")
         return response
 
     def host_update_inventory(self, hostid, inventory):
         response = self.api.host.update(hostid=hostid, inventory=inventory)
-        self.log.debug(f"DEBUG: response: {pformat(response)}")
+        self.log.debug(f"{hostid}:response: {pformat(response)}")
         return response
 
     def host_update_macros(self, hostid, macros):
         response = self.api.host.update(hostid=hostid, macros=macros)
-        self.log.debug(f"DEBUG: response: {pformat(response)}")
+        self.log.debug(f"{hostid}:response: {pformat(response)}")
         return response
 
     def host_update_hostgroups(self, hostid, hostgroups):
-        self.log.debug(f"TRACE:hostid={hostid},hostgroups={hostgroups}")
+        self.log.debug(f"TRACE:{hostid}:hostgroups:{hostgroups}")
         response = self.api.host.update(hostid=hostid, groups=hostgroups)
-        self.log.debug(f"DEBUG: response: {pformat(response)}")
+        self.log.debug(f"{hostid}:response:{pformat(response)}")
         return response
