@@ -494,17 +494,17 @@ class SonicNetboxZabbix:
         zabbix_server_dict = {}
         for zabbix_server in zabbix_server_list:
             if zabbix_server["host"][0].isdigit():  # UUID things like ESX hosts
-                zabbix_server_name = zabbix_server["name"]
+                zabbix_server_name = zabbix_server["name"].lower()
             else:
-                zabbix_server_name = zabbix_server["host"]
+                zabbix_server_name = zabbix_server["host"].lower()
             zabbix_server_dict[zabbix_server_name] = zabbix_server
 
         zabbix_notdiscovered_dict = {}
         for zabbix_server in zabbix_notdiscovered_list:
             if zabbix_server["host"][0].isdigit():  # UUID things like ESX hosts
-                zabbix_server_name = zabbix_server["name"]
+                zabbix_server_name = zabbix_server["name"].lower()
             else:
-                zabbix_server_name = zabbix_server["host"]
+                zabbix_server_name = zabbix_server["host"].lower()
             zabbix_notdiscovered_dict[zabbix_server_name] = zabbix_server
 
         log.debug("Getting list of servers from Netbox")
