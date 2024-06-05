@@ -2,13 +2,13 @@
 
 [[package]]
 name = "certifi"
-version = "2024.2.2"
+version = "2024.6.2"
 description = "Python package for providing Mozilla's CA Bundle."
 optional = false
 python-versions = ">=3.6"
 files = [
-    {file = "certifi-2024.2.2-py3-none-any.whl", hash = "sha256:dc383c07b76109f368f6106eee2b593b04a011ea4d55f652c6ca24a754d1cdd1"},
-    {file = "certifi-2024.2.2.tar.gz", hash = "sha256:0569859f95fc761b18b45ef421b1290a0f65f147e92a1e5eb3e635f9a5e4e66f"},
+    {file = "certifi-2024.6.2-py3-none-any.whl", hash = "sha256:ddc6c8ce995e6987e7faf5e3f1b02b302836a0e5d98ece18392cb1a36c72ad56"},
+    {file = "certifi-2024.6.2.tar.gz", hash = "sha256:3cd43f1c6fa7dedc5899d69d3ad0398fd018ad1a17fba83ddaf78aa46c747516"},
 ]
 
 [[package]]
@@ -181,13 +181,13 @@ requests = ">=2.20.0,<3.0"
 
 [[package]]
 name = "requests"
-version = "2.32.2"
+version = "2.32.3"
 description = "Python HTTP for Humans."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "requests-2.32.2-py3-none-any.whl", hash = "sha256:fc06670dd0ed212426dfeb94fc1b983d917c4f9847c863f313c9dfaaffb7c23c"},
-    {file = "requests-2.32.2.tar.gz", hash = "sha256:dd951ff5ecf3e3b3aa26b40703ba77495dab41da839ae72ef3c8e5d8e2433289"},
+    {file = "requests-2.32.3-py3-none-any.whl", hash = "sha256:70761cfe03c773ceb22aa2f671b4757976145175cdfca038c02654d061d6dcc6"},
+    {file = "requests-2.32.3.tar.gz", hash = "sha256:55365417734eb18255590a9ff9eb97e9e1da868d4ccd6402399eaf68af20a760"},
 ]
 
 [package.dependencies]
@@ -202,13 +202,13 @@ use-chardet-on-py3 = ["chardet (>=3.0.2,<6)"]
 
 [[package]]
 name = "sonic-logger"
-version = "1.0.4"
+version = "1.0.5"
 description = "Sonic's Python logging module."
 optional = true
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "sonic_logger-1.0.4-py3-none-any.whl", hash = "sha256:8b711756692c08b928dcf6b6e2bed13b1238a1f718204b117de32673a2128e10"},
-    {file = "sonic_logger-1.0.4.tar.gz", hash = "sha256:9f21bfb8e2266ad42d467086bde7b094cb6408642b7ede71e1d38b8abcb411eb"},
+    {file = "sonic_logger-1.0.5-py3-none-any.whl", hash = "sha256:90e42b7a95190df5ed10f230ea95a89892e41ad4c5c4f0f3d7b676b0c5e68737"},
+    {file = "sonic_logger-1.0.5.tar.gz", hash = "sha256:5db6edecdb0aade114e1edbe452d7f8d1294a4409a198b03df7cd46a38a705e7"},
 ]
 
 [package.source]
