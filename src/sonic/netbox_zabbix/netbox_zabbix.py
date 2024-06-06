@@ -503,7 +503,7 @@ class SonicNetboxZabbix:
                     log.debug("Zabbix Enable Tag")
                     self.zabbix.host_enable(zbsrv)
                 elif any(tag["slug"] == "zabbix-disable" for tag in nbsrv.tags):
-                    log.debug("Zabbix Enable Tag")
+                    log.debug("Zabbix Disable Tag")
                     self.zabbix.host_disable(zbsrv)
                 elif nbsrv.status["value"] == "decommissioning":
                     log.debug(f"Decommissioning Host {name}")

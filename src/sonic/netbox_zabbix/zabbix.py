@@ -96,10 +96,10 @@ class SonicNetboxZabbix_Zabbix:
         return response
 
     def host_disable(self, host):
-        hostid=host['hostid']
+        hostid=host["hostid"]
         log.debug(f"TRACE:{hostid}")
         # log.debug(f"TRACE:host:pformat:{pformat(host)}")
-        if host["status"] != "1":
+        if int(host["status"]) != 1:
             log.warning(f"Disabling host {host["name"]}/{hostid}")
             response = self.api.host.update(hostid=hostid, status=1)
             log.debug(f"{hostid}:response:{pformat(response)}")
@@ -112,7 +112,7 @@ class SonicNetboxZabbix_Zabbix:
         hostid=host['hostid']
         log.debug(f"TRACE:{hostid}")
         # log.debug(f"TRACE:host:pformat:{pformat(host)}")
-        if host["status"] != "0":
+        if int(host["status"]) != 0:
             log.warning(f"Enabling host {host["name"]}/{hostid}")
             response = self.api.host.update(hostid=hostid, status=0)
             log.debug(f"{hostid}:response:{pformat(response)}")
