@@ -127,6 +127,12 @@ class SonicNetboxZabbix:
             help="Don't update Zabbix Hostgroups from netbox data",
         )
 
+        argparser.add(
+            "--skip-disables",
+            action="store_true",
+            help="Don't disable Zabbix hosts based on netbox data",
+        )
+
         return argparser.parse_args()
 
     def _zabbix_login(self):
@@ -428,6 +434,7 @@ class SonicNetboxZabbix:
             else:
                 log.warning(f"{name}: No such host in netbox data")
 
+    @functools.cache
     def site_to_path(self, site) -> str:
 
         # region / group / provider / tenant / site
@@ -484,6 +491,37 @@ class SonicNetboxZabbix:
 
                 log.debug(f"{name}:setting hostgroups: {hostgroups}")
                 self.zabbix.host_update_hostgroups(zbsrv["hostid"], hostgroups)
+
+    def disable_enable_zabbix_hosts_from_netbox_data(self, zabbix_servers, netbox_servers):
+        for name in zabbix_servers:
+            if name in netbox_servers and netbox_servers[name]:
+                log.debug(f"TRACE:{name}:disable?")
+                nbsrv = netbox_servers[name]
+                zbsrv = zabbix_servers[name]
+                if nbsrv.status["value"] == "decommissioning":
+                    log.debug(f"Decommissioning Host {name}")
+                    self.zabbix.host_disable(zbsrv)
+                elif nbsrv.status["value"] == "planned":
+                    log.debug(f"Planned Host {name}")
+                    self.zabbix.host_disable(zbsrv)
+                elif nbsrv.tenant and nbsrv.tenant["slug"]:
+                    if nbsrv.tenant["slug"] == "soc-special-use":
+                        log.debug(f"SOC Special Use host {name}")
+                        self.zabbix.host_disable(zbsrv)
+                    elif nbsrv.tenant["slug"] == "soc":
+                        if nbsrv.status["value"] == "active":
+                            log.debug(f"SOC Active host {name}")
+                            self.zabbix.host_enable(zbsrv)
+                        elif nbsrv.status["value"] == "staged":
+                            log.debug(f"SOC Staged host {name}")
+                            self.zabbix.host_enable(zbsrv)
+                        else:
+                            log.info(f"Skipping enable/disable of SOC non-active host {name}/{nbsrv.status["value"]}")
+                    else:
+                        log.info(f"Skipping non-SOC host {name}")
+                else:
+                    log.warning(f"No tenant on {name}")
+
 
     def run(self):
         """Run cli app with the given arguments."""
@@ -542,6 +580,11 @@ class SonicNetboxZabbix:
         if not config.skip_hostgroups:
             self.copy_netbox_info_to_zabbix_hostgroups(
                 zabbix_notdiscovered_dict, netbox_server_dict
+            )
+
+        if not config.skip_disables:
+            self.disable_enable_zabbix_hosts_from_netbox_data(
+                zabbix_server_dict, netbox_server_dict
             )
 
 
