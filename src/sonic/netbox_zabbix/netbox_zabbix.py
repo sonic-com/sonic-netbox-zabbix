@@ -498,7 +498,14 @@ class SonicNetboxZabbix:
                 log.debug(f"TRACE:{name}:disable?")
                 nbsrv = netbox_servers[name]
                 zbsrv = zabbix_servers[name]
-                if nbsrv.status["value"] == "decommissioning":
+                # Enable if tagged Zabbix Enable
+                if any(tag["slug"] == "zabbix-enable" for tag in nbsrv.tags):
+                    log.debug("Zabbix Enable Tag")
+                    self.zabbix.host_enable(zbsrv)
+                elif any(tag["slug"] == "zabbix-disable" for tag in nbsrv.tags):
+                    log.debug("Zabbix Enable Tag")
+                    self.zabbix.host_disable(zbsrv)
+                elif nbsrv.status["value"] == "decommissioning":
                     log.debug(f"Decommissioning Host {name}")
                     self.zabbix.host_disable(zbsrv)
                 elif nbsrv.status["value"] == "planned":
