@@ -10,13 +10,17 @@ class SonicNetboxZabbix_Zabbix:
     """
 
     log = False
+    config = False
 
-    def __init__(self, logger, config):
+    def __init__(self, logger, configobj):
         global log
+        global config
+
         self.log = logger
-        self.config = config
+        self.config = configobj
 
         log = self.log
+        config = self.config
 
         # self.log.info("Logging into Zabbix")
         api = ZabbixAPI(self.config.zabbixurl)
@@ -68,10 +72,11 @@ class SonicNetboxZabbix_Zabbix:
             log.debug(f"{name}:sites[0]:{sites[0]}")
             groupid = sites[0]["groupid"]
         else:
-            log.debug(f"TRACE:create group:{name}")
+            if config.verbose >= 4:
+                log.debug(f"TRACE:create group:{name}")
             groupid = self.api.hostgroup.create(name=name)["groupids"][0]
 
-        log.debug(f"DEBUG:returning groupid:{groupid}")
+        log.debug(f"returning groupid:{groupid}")
         return {"groupid": int(groupid)}
 
     def host_update_tags(self, hostid, tags):
@@ -90,14 +95,16 @@ class SonicNetboxZabbix_Zabbix:
         return response
 
     def host_update_hostgroups(self, hostid, hostgroups):
-        log.debug(f"TRACE:{hostid}:hostgroups:{hostgroups}")
+        if config.verbose >= 4:
+            log.debug(f"TRACE:{hostid}:hostgroups:{hostgroups}")
         response = self.api.host.update(hostid=hostid, groups=hostgroups)
         log.debug(f"{hostid}:response:{pformat(response)}")
         return response
 
     def host_disable(self, host):
         hostid=host["hostid"]
-        log.debug(f"TRACE:{hostid}")
+        if config.verbose >= 4:
+            log.debug(f"TRACE:{hostid}")
         # log.debug(f"TRACE:host:pformat:{pformat(host)}")
         if int(host["status"]) != 1:
             log.warning(f"Disabling host {host["name"]}/{hostid}")
@@ -105,13 +112,15 @@ class SonicNetboxZabbix_Zabbix:
             log.debug(f"{hostid}:response:{pformat(response)}")
             return response
         else:
-            self.log.debug(f"Already disabled host {host["name"]}/{hostid}")
+            log.info(f"Already disabled host {host["name"]}/{hostid}")
             return False
 
     def host_enable(self, host):
         hostid=host['hostid']
-        log.debug(f"TRACE:{hostid}")
-        # log.debug(f"TRACE:host:pformat:{pformat(host)}")
+        if config.verbose >= 4:
+            log.debug(f"TRACE:{hostid}")
+        if config.verbose >= 5:
+            log.debug(f"TRACE:host:pformat:{pformat(host)}")
         if int(host["status"]) != 0:
             log.warning(f"Enabling host {host["name"]}/{hostid}")
             response = self.api.host.update(hostid=hostid, status=0)

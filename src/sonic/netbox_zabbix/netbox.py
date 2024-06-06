@@ -9,19 +9,22 @@ class SonicNetboxZabbix_Netbox:
     """
 
     log = False
+    config = False
 
-    def __init__(self, logger, config):
+    def __init__(self, logger, configobj):
         global log
+        global config
 
         self.log = logger
-        self.config = config
+        self.config = configobj
 
         log = self.log
+        config = self.config
 
         log.debug("Logging into Netbox")
         self.api = pynetbox.api(
-            self.config.netboxurl,
-            token=self.config.netboxtoken,
+            config.netboxurl,
+            token=config.netboxtoken,
             threading=True,
         )
 
