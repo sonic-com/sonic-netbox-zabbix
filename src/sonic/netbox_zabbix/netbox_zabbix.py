@@ -498,7 +498,9 @@ class SonicNetboxZabbix:
                 log.debug(f"{name}:setting hostgroups: {hostgroups}")
                 self.zabbix.host_update_hostgroups(zbsrv["hostid"], hostgroups)
 
-    def disable_enable_zabbix_hosts_from_netbox_data(self, zabbix_servers, netbox_servers):
+    def disable_enable_zabbix_hosts_from_netbox_data(
+        self, zabbix_servers, netbox_servers
+    ):
         for name in zabbix_servers:
             if name in netbox_servers and netbox_servers[name]:
                 if config.verbose >= 4:
@@ -514,8 +516,13 @@ class SonicNetboxZabbix:
                     log.debug("Zabbix Disable Tag")
                     self.zabbix.host_disable(zbsrv)
                 # Disable if status is various inactive types
-                elif nbsrv.status["value"] in ["decommissioning", "planned", "inventory", "failed"]:
-                    log.debug(f"In-Active Host {name}/{nbsrv.status["value"]}")
+                elif nbsrv.status["value"] in [
+                    "decommissioning",
+                    "planned",
+                    "inventory",
+                    "failed",
+                ]:
+                    log.debug(f"In-Active Host {name}/{nbsrv.status['value']}")
                     self.zabbix.host_disable(zbsrv)
                 # Per-tenant logic
                 elif nbsrv.tenant and nbsrv.tenant["slug"]:
@@ -531,12 +538,13 @@ class SonicNetboxZabbix:
                             log.debug(f"SOC Staged host {name}")
                             self.zabbix.host_enable(zbsrv)
                         else:
-                            log.info(f"Skipping enable/disable of SOC non-active host {name}/{nbsrv.status["value"]}")
+                            log.info(
+                                f"Skipping enable/disable of SOC non-active host {name}/{nbsrv.status['value']}"
+                            )
                     else:
                         log.info(f"Skipping non-SOC host {name}")
                 else:
                     log.warning(f"No tenant on {name}")
-
 
     def run(self):
         """Run cli app with the given arguments."""

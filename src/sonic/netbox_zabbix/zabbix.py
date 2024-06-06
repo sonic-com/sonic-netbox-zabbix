@@ -102,30 +102,30 @@ class SonicNetboxZabbix_Zabbix:
         return response
 
     def host_disable(self, host):
-        hostid=host["hostid"]
+        hostid = host["hostid"]
         if config.verbose >= 4:
             log.debug(f"TRACE:{hostid}")
         # log.debug(f"TRACE:host:pformat:{pformat(host)}")
         if int(host["status"]) != 1:
-            log.warning(f"Disabling host {host["name"]}/{hostid}")
+            log.warning(f"Disabling host {host['name']}/{hostid}")
             response = self.api.host.update(hostid=hostid, status=1)
             log.debug(f"{hostid}:response:{pformat(response)}")
             return response
         else:
-            log.info(f"Already disabled host {host["name"]}/{hostid}")
+            log.info(f"Already disabled host {host['name']}/{hostid}")
             return False
 
     def host_enable(self, host):
-        hostid=host['hostid']
+        hostid = host["hostid"]
         if config.verbose >= 4:
             log.debug(f"TRACE:{hostid}")
         if config.verbose >= 5:
             log.debug(f"TRACE:host:pformat:{pformat(host)}")
         if int(host["status"]) != 0:
-            log.warning(f"Enabling host {host["name"]}/{hostid}")
+            log.warning(f"Enabling host {host['name']}/{hostid}")
             response = self.api.host.update(hostid=hostid, status=0)
             log.debug(f"{hostid}:response:{pformat(response)}")
             return response
         else:
-            log.debug(f"Already enabled host {host["name"]}/{hostid}")
+            log.debug(f"Already enabled host {host['name']}/{hostid}")
             return False
