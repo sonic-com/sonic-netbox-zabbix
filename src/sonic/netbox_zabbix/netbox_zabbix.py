@@ -504,6 +504,12 @@ class SonicNetboxZabbix:
                 elif nbsrv.status["value"] == "planned":
                     log.debug(f"Planned Host {name}")
                     self.zabbix.host_disable(zbsrv)
+                elif nbsrv.status["value"] == "inventory":
+                    log.debug(f"Inventory Host {name}")
+                    self.zabbix.host_disable(zbsrv)
+                elif nbsrv.status["value"] == "failed":
+                    log.debug(f"Failed Host {name}")
+                    self.zabbix.host_disable(zbsrv)
                 elif nbsrv.tenant and nbsrv.tenant["slug"]:
                     if nbsrv.tenant["slug"] == "soc-special-use":
                         log.debug(f"SOC Special Use host {name}")
