@@ -32,9 +32,7 @@ class SonicNetboxZabbix:
             try:
                 config = SonicNetboxZabbix._parseargs()
             except Exception as e:
-                print(
-                    f"An error occurred parsing config files or command-line arguments: {str(e)}"
-                )
+                print(f"An error occurred parsing config files or command-line arguments: {str(e)}")
                 raise
 
         if "log" not in locals() or not log:
@@ -94,17 +92,11 @@ class SonicNetboxZabbix:
             default=0,
             help="Show more logging messages. More -v for more logging",
         )
-        argparser.add(
-            "-q", "--quiet", action="store_true", help="Show fewer logging messages"
-        )
+        argparser.add("-q", "--quiet", action="store_true", help="Show fewer logging messages")
         argparser.add("--netboxurl", "-n", required=True, help="URL for netbox")
         argparser.add("--zabbixurl", "-z", required=True, help="URL for zabbix")
-        argparser.add(
-            "--netboxtoken", "-N", required=True, help="API auth token for Netbox"
-        )
-        argparser.add(
-            "--zabbixtoken", "-Z", required=True, help="API auth token for Zabbix"
-        )
+        argparser.add("--netboxtoken", "-N", required=True, help="API auth token for Netbox")
+        argparser.add("--zabbixtoken", "-Z", required=True, help="API auth token for Zabbix")
 
         argparser.add(
             "--skip-macros",
@@ -148,9 +140,7 @@ class SonicNetboxZabbix:
     def copy_zabbix_hostid_to_netbox(self, zabbix_servers, netbox_servers):
         for name in zabbix_servers:
             if name in netbox_servers and netbox_servers[name]:
-                netbox_servers[name]["custom_fields"]["zabbix_host_id"] = int(
-                    zabbix_servers[name]["hostid"]
-                )
+                netbox_servers[name]["custom_fields"]["zabbix_host_id"] = int(zabbix_servers[name]["hostid"])
                 netbox_servers[name].save()
             else:
                 log.info(f"No such server {name} in netbox data")
@@ -166,11 +156,7 @@ class SonicNetboxZabbix:
                 if "macros" in zabbix_servers[name]:
                     macros = zabbix_servers[name]["macros"]
                     log.debug(f"macros(pre): {pformat(macros)}")
-                    macros = [
-                        item
-                        for item in macros
-                        if not item["macro"].startswith("{$NETBOX.")
-                    ]
+                    macros = [item for item in macros if not item["macro"].startswith("{$NETBOX.")]
                 else:
                     macros = []
                 log.debug(f"macros(post): {pformat(macros)}")
@@ -236,10 +222,7 @@ class SonicNetboxZabbix:
                     }
                 )
 
-                if (
-                    "update_group" in srv.custom_fields
-                    and srv.custom_fields["update_group"]
-                ):
+                if "update_group" in srv.custom_fields and srv.custom_fields["update_group"]:
                     log.info(f"Adding update_group to zabbix macro for {name}")
 
                     macros.append(
@@ -275,9 +258,7 @@ class SonicNetboxZabbix:
                 if "tags" in zabbix_servers[name]:
                     tags = zabbix_servers[name]["tags"]
                     log.debug(f"{name} tags(original): {pformat(tags)}")
-                    tags = [
-                        item for item in tags if not item["tag"].startswith("netbox-")
-                    ]
+                    tags = [item for item in tags if not item["tag"].startswith("netbox-")]
                 else:
                     tags = []
                 log.debug(f"{name} tags(1): {pformat(tags)}")
@@ -286,27 +267,19 @@ class SonicNetboxZabbix:
                     tags.append({"tag": "netbox-status", "value": srv.status["value"]})
                     # If planned, don't notify at all
                     if srv.status["value"] == "planned":
-                        tags = self.add_tag_nodupe(
-                            tags, {"tag": "sonic-alerting", "value": "nonotice"}
-                        )
+                        tags = self.add_tag_nodupe(tags, {"tag": "sonic-alerting", "value": "nonotice"})
                     # If staged, don't page
                     elif srv.status["value"] == "staged":
-                        tags = self.add_tag_nodupe(
-                            tags, {"tag": "sonic-alerting", "value": "nopage"}
-                        )
+                        tags = self.add_tag_nodupe(tags, {"tag": "sonic-alerting", "value": "nopage"})
                     # If server is active, don't let it be nopage/nonotice unless explicitly
                     # set that way in Netbox (further down will get added back if tag is set)
                     elif srv.status["value"] == "active":
-                        tags = [
-                            item for item in tags if not item["tag"] == "sonic-alerting"
-                        ]
+                        tags = [item for item in tags if not item["tag"] == "sonic-alerting"]
 
                 log.debug(f"{name} tags(2): {pformat(tags)}")
 
                 if srv.platform and srv.platform["slug"]:
-                    tags.append(
-                        {"tag": "netbox-platform", "value": srv.platform["slug"]}
-                    )
+                    tags.append({"tag": "netbox-platform", "value": srv.platform["slug"]})
 
                 if srv.site and srv.site["slug"]:
                     tags.append({"tag": "netbox-site", "value": srv.site["slug"]})
@@ -314,9 +287,7 @@ class SonicNetboxZabbix:
                 if srv.tenant and srv.tenant["slug"]:
                     tags.append({"tag": "netbox-tenant", "value": srv.tenant["slug"]})
                     if srv.tenant["slug"] == "soc-special-use":
-                        tags = self.add_tag_nodupe(
-                            tags, {"tag": "sonic-alerting", "value": "nonotice"}
-                        )
+                        tags = self.add_tag_nodupe(tags, {"tag": "sonic-alerting", "value": "nonotice"})
 
                 if srv.role and srv.role["slug"]:
                     tags.append({"tag": "netbox-role", "value": srv.role["slug"]})
@@ -324,16 +295,9 @@ class SonicNetboxZabbix:
                 log.debug(f"{name} tags(3): {pformat(tags)}")
 
                 if srv.custom_fields:
-                    if (
-                        "zabbix_alert_routing" in srv.custom_fields
-                        and srv.custom_fields["zabbix_alert_routing"]
-                    ):
+                    if "zabbix_alert_routing" in srv.custom_fields and srv.custom_fields["zabbix_alert_routing"]:
                         # Remove existing sonic-alert-routing tag
-                        tags = [
-                            item
-                            for item in tags
-                            if not item["tag"] == "sonic-alert-routing"
-                        ]
+                        tags = [item for item in tags if not item["tag"] == "sonic-alert-routing"]
                         tags.append(
                             {
                                 "tag": "sonic-alert-routing",
@@ -345,13 +309,8 @@ class SonicNetboxZabbix:
                     log.info(f"{name}: Updating tags")
 
                     for tag in srv.tags:
-                        if (
-                            tag["slug"] == "zabbix-alerting-nopage"
-                            or tag["slug"] == "soc-nopage"
-                        ):
-                            tags = self.add_tag_nodupe(
-                                tags, {"tag": "sonic-alerting", "value": "nopage"}
-                            )
+                        if tag["slug"] == "zabbix-alerting-nopage" or tag["slug"] == "soc-nopage":
+                            tags = self.add_tag_nodupe(tags, {"tag": "sonic-alerting", "value": "nopage"})
                         else:
                             tags.append(
                                 {
@@ -365,10 +324,7 @@ class SonicNetboxZabbix:
                     log.warning(f"{name}: No netbox tags")
                     log.debug(f"{name} srv.tags {pformat(dict(srv.tags))}")
 
-                if (
-                    "update_group" in srv.custom_fields
-                    and srv.custom_fields["update_group"]
-                ):
+                if "update_group" in srv.custom_fields and srv.custom_fields["update_group"]:
                     log.info(f"Adding update_group to zabbix for {name}")
 
                     tags.append(
@@ -420,9 +376,7 @@ class SonicNetboxZabbix:
                     inventory["notes"] = srv.comments
 
                 if "oob_ip" in srv and len(str(srv.oob_ip)) > 1:
-                    (inventory["oob_ip"], inventory["oob_netmask"]) = srv.oob_ip[
-                        "address"
-                    ].split("/")
+                    (inventory["oob_ip"], inventory["oob_netmask"]) = srv.oob_ip["address"].split("/")
 
                 # If we did anything, update Zabbix
                 if inventory:
@@ -468,12 +422,8 @@ class SonicNetboxZabbix:
                 hostgroups = zbsrv["hostgroups"]
                 if config.verbose >= 4:
                     log.debug(f"TRACE:{name}: hostgroups:unfiltered: {hostgroups}")
-                hostgroups = [
-                    item for item in hostgroups if not item["name"].startswith("Sites/")
-                ]
-                hostgroups = [
-                    item for item in hostgroups if not item["name"].startswith("Sonic/")
-                ]
+                hostgroups = [item for item in hostgroups if not item["name"].startswith("Sites/")]
+                hostgroups = [item for item in hostgroups if not item["name"].startswith("Sonic/")]
                 if config.verbose >= 4:
                     log.debug(f"TRACE:{name}: hostgroups:filtered: {hostgroups}")
                 hostgroups = [{"groupid": item["groupid"]} for item in hostgroups]
@@ -490,17 +440,13 @@ class SonicNetboxZabbix:
                 # Tenant
                 if nbsrv.tenant and nbsrv.tenant["display"]:
                     log.debug(f"{name}:adding hostgroup {nbsrv.tenant['display']}")
-                    new_hostgroup = self.zabbix.hostgroup_site_get_or_create(
-                        f"Sonic/{nbsrv.tenant['display']}"
-                    )
+                    new_hostgroup = self.zabbix.hostgroup_site_get_or_create(f"Sonic/{nbsrv.tenant['display']}")
                     hostgroups.append(new_hostgroup)
 
                 log.debug(f"{name}:setting hostgroups: {hostgroups}")
                 self.zabbix.host_update_hostgroups(zbsrv["hostid"], hostgroups)
 
-    def disable_enable_zabbix_hosts_from_netbox_data(
-        self, zabbix_servers, netbox_servers
-    ):
+    def disable_enable_zabbix_hosts_from_netbox_data(self, zabbix_servers, netbox_servers):
         for name in zabbix_servers:
             if name in netbox_servers and netbox_servers[name]:
                 if config.verbose >= 4:
@@ -538,9 +484,7 @@ class SonicNetboxZabbix:
                             log.debug(f"SOC Staged host {name}")
                             self.zabbix.host_enable(zbsrv)
                         else:
-                            log.info(
-                                f"Skipping enable/disable of SOC non-active host {name}/{nbsrv.status['value']}"
-                            )
+                            log.info(f"Skipping enable/disable of SOC non-active host {name}/{nbsrv.status['value']}")
                     else:
                         log.info(f"Skipping non-SOC host {name}")
                 else:
@@ -575,9 +519,7 @@ class SonicNetboxZabbix:
         log.debug("Getting list of servers from Netbox")
         netbox_server_list = self.netbox.get_hosts_all()
         # log.info(f"DEBUG: netbox_server_list: {pformat(netbox_server_list)}")
-        log.debug(
-            f"DEBUG: netbox_server_list[0]: {pformat(dict(netbox_server_list[0]))}"
-        )
+        log.debug(f"DEBUG: netbox_server_list[0]: {pformat(dict(netbox_server_list[0]))}")
 
         netbox_server_dict = {}
         for netbox_server in netbox_server_list:
@@ -588,27 +530,19 @@ class SonicNetboxZabbix:
         self.copy_zabbix_hostid_to_netbox(zabbix_server_dict, netbox_server_dict)
 
         if not config.skip_macros:
-            self.copy_netbox_info_to_zabbix_macros(
-                netbox_server_dict, zabbix_server_dict
-            )
+            self.copy_netbox_info_to_zabbix_macros(netbox_server_dict, zabbix_server_dict)
 
         if not config.skip_tags:
             self.copy_netbox_info_to_zabbix_tags(netbox_server_dict, zabbix_server_dict)
 
         if not config.skip_inventory:
-            self.copy_netbox_info_to_zabbix_inventory(
-                netbox_server_dict, zabbix_server_dict
-            )
+            self.copy_netbox_info_to_zabbix_inventory(netbox_server_dict, zabbix_server_dict)
 
         if not config.skip_hostgroups:
-            self.copy_netbox_info_to_zabbix_hostgroups(
-                zabbix_notdiscovered_dict, netbox_server_dict
-            )
+            self.copy_netbox_info_to_zabbix_hostgroups(zabbix_notdiscovered_dict, netbox_server_dict)
 
         if not config.skip_disables:
-            self.disable_enable_zabbix_hosts_from_netbox_data(
-                zabbix_server_dict, netbox_server_dict
-            )
+            self.disable_enable_zabbix_hosts_from_netbox_data(zabbix_server_dict, netbox_server_dict)
 
 
 def main():
