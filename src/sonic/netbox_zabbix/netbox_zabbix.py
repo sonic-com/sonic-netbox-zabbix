@@ -158,7 +158,8 @@ class SonicNetboxZabbix:
     def copy_netbox_info_to_zabbix_macros(self, netbox_servers, zabbix_servers):
         for name in zabbix_servers:
             if name in netbox_servers and netbox_servers[name]:
-                log.debug(f"TRACE: macros for {name}")
+                if config.verbose >= 4:
+                    log.debug(f"TRACE: macros for {name}")
                 srv = netbox_servers[name]
 
                 # Pull current macros in, minus the $NETBOX. macros
@@ -268,7 +269,8 @@ class SonicNetboxZabbix:
     def copy_netbox_info_to_zabbix_tags(self, netbox_servers, zabbix_servers):
         for name in zabbix_servers:
             if name in netbox_servers and netbox_servers[name]:
-                log.debug(f"TRACE: tags for {name}")
+                if config.verbose >= 4:
+                    log.debug(f"TRACE: tags for {name}")
                 srv = netbox_servers[name]
                 if "tags" in zabbix_servers[name]:
                     tags = zabbix_servers[name]["tags"]
@@ -391,7 +393,8 @@ class SonicNetboxZabbix:
     def copy_netbox_info_to_zabbix_inventory(self, netbox_servers, zabbix_servers):
         for name in zabbix_servers:
             if name in netbox_servers and netbox_servers[name]:
-                log.debug(f"TRACE:{name}: inventory")
+                if config.verbose >= 4:
+                    log.debug(f"TRACE:{name}: inventory")
                 srv = netbox_servers[name]
                 inventory = {}
 
@@ -458,18 +461,21 @@ class SonicNetboxZabbix:
     def copy_netbox_info_to_zabbix_hostgroups(self, zabbix_servers, netbox_servers):
         for name in zabbix_servers:
             if name in netbox_servers and netbox_servers[name]:
-                log.debug(f"TRACE:{name}:groups")
+                if config.verbose >= 4:
+                    log.debug(f"TRACE:{name}:groups")
                 nbsrv = netbox_servers[name]
                 zbsrv = zabbix_servers[name]
                 hostgroups = zbsrv["hostgroups"]
-                log.debug(f"TRACE:{name}: hostgroups:unfiltered: {hostgroups}")
+                if config.verbose >= 4:
+                    log.debug(f"TRACE:{name}: hostgroups:unfiltered: {hostgroups}")
                 hostgroups = [
                     item for item in hostgroups if not item["name"].startswith("Sites/")
                 ]
                 hostgroups = [
                     item for item in hostgroups if not item["name"].startswith("Sonic/")
                 ]
-                log.debug(f"TRACE:{name}: hostgroups:filtered: {hostgroups}")
+                if config.verbose >= 4:
+                    log.debug(f"TRACE:{name}: hostgroups:filtered: {hostgroups}")
                 hostgroups = [{"groupid": item["groupid"]} for item in hostgroups]
 
                 # sites
@@ -495,32 +501,28 @@ class SonicNetboxZabbix:
     def disable_enable_zabbix_hosts_from_netbox_data(self, zabbix_servers, netbox_servers):
         for name in zabbix_servers:
             if name in netbox_servers and netbox_servers[name]:
-                log.debug(f"TRACE:{name}:disable?")
+                if config.verbose >= 4:
+                    log.debug(f"TRACE:{name}:disable?")
                 nbsrv = netbox_servers[name]
                 zbsrv = zabbix_servers[name]
                 # Enable if tagged Zabbix Enable
                 if any(tag["slug"] == "zabbix-enable" for tag in nbsrv.tags):
                     log.debug("Zabbix Enable Tag")
                     self.zabbix.host_enable(zbsrv)
+                # Disable if tagged Zabbix Disable
                 elif any(tag["slug"] == "zabbix-disable" for tag in nbsrv.tags):
                     log.debug("Zabbix Disable Tag")
                     self.zabbix.host_disable(zbsrv)
-                elif nbsrv.status["value"] == "decommissioning":
-                    log.debug(f"Decommissioning Host {name}")
+                # Disable if status is various inactive types
+                elif nbsrv.status["value"] in ["decommissioning", "planned", "inventory", "failed"]:
+                    log.debug(f"In-Active Host {name}/{nbsrv.status["value"]}")
                     self.zabbix.host_disable(zbsrv)
-                elif nbsrv.status["value"] == "planned":
-                    log.debug(f"Planned Host {name}")
-                    self.zabbix.host_disable(zbsrv)
-                elif nbsrv.status["value"] == "inventory":
-                    log.debug(f"Inventory Host {name}")
-                    self.zabbix.host_disable(zbsrv)
-                elif nbsrv.status["value"] == "failed":
-                    log.debug(f"Failed Host {name}")
-                    self.zabbix.host_disable(zbsrv)
+                # Per-tenant logic
                 elif nbsrv.tenant and nbsrv.tenant["slug"]:
+                    # Skip "SOC Special Use" for now
                     if nbsrv.tenant["slug"] == "soc-special-use":
-                        log.debug(f"SOC Special Use host {name}")
-                        self.zabbix.host_disable(zbsrv)
+                        log.info(f"Skipping SOC Special Use host {name}")
+                    # Enable active and staged SOC hosts
                     elif nbsrv.tenant["slug"] == "soc":
                         if nbsrv.status["value"] == "active":
                             log.debug(f"SOC Active host {name}")
