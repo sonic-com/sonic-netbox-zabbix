@@ -162,75 +162,59 @@ class SonicNetboxZabbix:
                 log.debug(f"macros(post): {pformat(macros)}")
 
                 if srv.status and srv.status["value"] and srv.status["label"]:
-                    macros.append(
-                        {
-                            "macro": "{$NETBOX.STATUS}",
-                            "value": srv.status["value"],
-                            "description": srv.status["label"],
-                        }
-                    )
+                    macros.append({
+                        "macro": "{$NETBOX.STATUS}",
+                        "value": srv.status["value"],
+                        "description": srv.status["label"],
+                    })
 
                 if srv.platform and srv.platform["slug"] and srv.platform["display"]:
-                    macros.append(
-                        {
-                            "macro": "{$NETBOX.PLATFORM}",
-                            "value": srv.platform["slug"],
-                            "description": srv.platform["display"],
-                        }
-                    )
+                    macros.append({
+                        "macro": "{$NETBOX.PLATFORM}",
+                        "value": srv.platform["slug"],
+                        "description": srv.platform["display"],
+                    })
 
                 if srv.site and srv.site["slug"] and srv.site["display"]:
-                    macros.append(
-                        {
-                            "macro": "{$NETBOX.SITE}",
-                            "value": srv.site["slug"],
-                            "description": srv.site["display"],
-                        }
-                    )
+                    macros.append({
+                        "macro": "{$NETBOX.SITE}",
+                        "value": srv.site["slug"],
+                        "description": srv.site["display"],
+                    })
 
                 if srv.tenant and srv.tenant["slug"] and srv.tenant["display"]:
-                    macros.append(
-                        {
-                            "macro": "{$NETBOX.TENANT}",
-                            "value": srv.tenant["slug"],
-                            "description": srv.tenant["display"],
-                        }
-                    )
+                    macros.append({
+                        "macro": "{$NETBOX.TENANT}",
+                        "value": srv.tenant["slug"],
+                        "description": srv.tenant["display"],
+                    })
 
                 if srv.role and srv.role["slug"] and srv.role["display"]:
-                    macros.append(
-                        {
-                            "macro": "{$NETBOX.ROLE}",
-                            "value": srv.role["slug"],
-                            "description": srv.role["display"],
-                        }
-                    )
+                    macros.append({
+                        "macro": "{$NETBOX.ROLE}",
+                        "value": srv.role["slug"],
+                        "description": srv.role["display"],
+                    })
 
-                macros.append(
-                    {
-                        "macro": "{$NETBOX.DATE.CREATED}",
-                        "value": srv.created,
-                        "description": "Date Netbox record created",
-                    }
-                )
+                macros.append({
+                    "macro": "{$NETBOX.DATE.CREATED}",
+                    "value": srv.created,
+                    "description": "Date Netbox record created",
+                })
 
-                macros.append(
-                    {
-                        "macro": "{$NETBOX.DATE.LAST_UPDATED}",
-                        "value": srv.last_updated,
-                        "description": "Date Netbox record last updated",
-                    }
-                )
+                macros.append({
+                    "macro": "{$NETBOX.DATE.LAST_UPDATED}",
+                    "value": srv.last_updated,
+                    "description": "Date Netbox record last updated",
+                })
 
                 if "update_group" in srv.custom_fields and srv.custom_fields["update_group"]:
                     log.info(f"Adding update_group to zabbix macro for {name}")
 
-                    macros.append(
-                        {
-                            "macro": "{$NETBOX.UPDATE_GROUP}",
-                            "value": srv.custom_fields["update_group"],
-                        }
-                    )
+                    macros.append({
+                        "macro": "{$NETBOX.UPDATE_GROUP}",
+                        "value": srv.custom_fields["update_group"],
+                    })
                 else:
                     log.warning(f"No update_group for {name}")
 
@@ -298,12 +282,10 @@ class SonicNetboxZabbix:
                     if "zabbix_alert_routing" in srv.custom_fields and srv.custom_fields["zabbix_alert_routing"]:
                         # Remove existing sonic-alert-routing tag
                         tags = [item for item in tags if not item["tag"] == "sonic-alert-routing"]
-                        tags.append(
-                            {
-                                "tag": "sonic-alert-routing",
-                                "value": srv.custom_fields["zabbix_alert_routing"],
-                            }
-                        )
+                        tags.append({
+                            "tag": "sonic-alert-routing",
+                            "value": srv.custom_fields["zabbix_alert_routing"],
+                        })
 
                 if srv.tags:
                     log.info(f"{name}: Updating tags")
@@ -312,12 +294,10 @@ class SonicNetboxZabbix:
                         if tag["slug"] == "zabbix-alerting-nopage" or tag["slug"] == "soc-nopage":
                             tags = self.add_tag_nodupe(tags, {"tag": "sonic-alerting", "value": "nopage"})
                         else:
-                            tags.append(
-                                {
-                                    "tag": "netbox-tag",
-                                    "value": tag["slug"],
-                                }
-                            )
+                            tags.append({
+                                "tag": "netbox-tag",
+                                "value": tag["slug"],
+                            })
                     log.debug(f"{name} tags(4): {pformat(tags)}")
 
                 else:
@@ -327,12 +307,10 @@ class SonicNetboxZabbix:
                 if "update_group" in srv.custom_fields and srv.custom_fields["update_group"]:
                     log.info(f"Adding update_group to zabbix for {name}")
 
-                    tags.append(
-                        {
-                            "tag": "netbox-update-group",
-                            "value": srv.custom_fields["update_group"],
-                        }
-                    )
+                    tags.append({
+                        "tag": "netbox-update-group",
+                        "value": srv.custom_fields["update_group"],
+                    })
                 else:
                     log.warning(f"{name}: No update_group for")
 
