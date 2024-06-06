@@ -43,3 +43,4 @@ netbox_zabbix = "sonic.netbox_zabbix:main"
 [tool.black]
 target-version = ["py311", "py312"]
 line-length = 120
+preview = true
