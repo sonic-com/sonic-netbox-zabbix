@@ -137,7 +137,8 @@ class SonicNetboxZabbix:
         log.debug("Logging into Netbox")
         self.netbox = SonicNetboxZabbix_Netbox(log, config)
 
-    def copy_zabbix_hostid_to_netbox(self, zabbix_servers, netbox_servers):
+    @staticmethod
+    def copy_zabbix_hostid_to_netbox(zabbix_servers, netbox_servers):
         for name in zabbix_servers:
             if name in netbox_servers and netbox_servers[name]:
                 netbox_servers[name]["custom_fields"]["zabbix_host_id"] = int(zabbix_servers[name]["hostid"])
@@ -244,7 +245,8 @@ class SonicNetboxZabbix:
                 else:
                     log.warning(f"No Macros updates for {name}")
 
-    def add_tag_nodupe(self, tags, new_tag):
+    @staticmethod
+    def add_tag_nodupe(tags, new_tag):
         if new_tag not in tags:
             tags.append(new_tag)
         return tags
@@ -392,7 +394,8 @@ class SonicNetboxZabbix:
                 log.warning(f"{name}: No such host in netbox data")
 
     @functools.cache
-    def site_to_path(self, site) -> str:
+    @staticmethod
+    def site_to_path(site) -> str:
 
         # region / group / provider / tenant / site
 

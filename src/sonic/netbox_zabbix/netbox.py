@@ -35,14 +35,14 @@ class SonicNetboxZabbix_Netbox:
     # Virtual Machines #
     ####################
     @functools.cache
-    def get_vms_all(self):
+    def get_vms_all(self) -> list:
         """Get all VMs from Netbox"""
-        return self.vms.all()
+        return list(self.vms.all())
 
     @functools.cache
-    def get_vms_active_soc_server(self):
+    def get_vms_active_soc_server(self) -> list:
         vms = self.get_vms_all()
-        return self.vms.filter(role="server", tenant="soc", status="active")
+        return list(self.vms.filter(role="server", tenant="soc", status="active"))
 
     ####################
     # Physical Devices #
@@ -52,20 +52,20 @@ class SonicNetboxZabbix_Netbox:
         return self.devices.all()
 
     @functools.cache
-    def get_devices_active_soc_server(self):
-        return self.devices.filter(role="server", tenant="soc", status="active")
+    def get_devices_active_soc_server(self) -> list:
+        return list(self.devices.filter(role="server", tenant="soc", status="active"))
 
     ##########################
     # Hosts == VMs + Devices #
     ##########################
     @functools.cache
-    def get_hosts_all(self):
+    def get_hosts_all(self) -> list:
         vms = self.get_vms_all()
         devices = self.get_devices_all()
         return list(vms) + list(devices)
 
     @functools.cache
-    def get_hosts_active_soc_server(self):
+    def get_hosts_active_soc_server(self) -> list:
         vms = self.get_vms_active_soc_server()
         devices = self.get_devices_active_soc_server()
         return list(vms) + list(devices)
@@ -91,14 +91,16 @@ class SonicNetboxZabbix_Netbox:
         return sites
 
     @functools.cache
-    def is_physical(self, server) -> bool:
+    @staticmethod
+    def is_physical(server) -> bool:
         if "device_type" in dict(server):
             return True
         else:
             return False
 
     @functools.cache
-    def is_virtual(self, server) -> bool:
+    @staticmethod
+    def is_virtual(server) -> bool:
         if "memory" in dict(server):
             return True
         else:
