@@ -7,8 +7,9 @@ repos:
     -   id: check-ast
     -   id: end-of-file-fixer
     -   id: trailing-whitespace
--   repo: https://github.com/psf/black
+-   repo: https://github.com/psf/black-pre-commit-mirror
     rev: 24.4.2
     hooks:
     -   id: black
+        language_version: python3.12
         args: [ --preview, -l120 ]
