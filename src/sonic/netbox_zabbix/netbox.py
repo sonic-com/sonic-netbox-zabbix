@@ -89,3 +89,17 @@ class SonicNetboxZabbix_Netbox:
             if site.device_count >= 1:
                 sites.append(site)
         return sites
+
+    @functools.cache
+    def is_physical(self, server) -> bool:
+        if "device_type" in dict(server):
+            return True
+        else:
+            return False
+
+    @functools.cache
+    def is_virtual(self, server) -> bool:
+        if "memory" in dict(server):
+            return True
+        else:
+            return False
