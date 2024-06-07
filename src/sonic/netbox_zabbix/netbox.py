@@ -91,16 +91,14 @@ class SonicNetboxZabbix_Netbox:
         return sites
 
     @functools.cache
-    @staticmethod
-    def is_physical(server) -> bool:
+    def is_physical(self, server) -> bool:
         if "device_type" in dict(server):
             return True
         else:
             return False
 
     @functools.cache
-    @staticmethod
-    def is_virtual(server) -> bool:
+    def is_virtual(self, server) -> bool:
         if "memory" in dict(server):
             return True
         else:

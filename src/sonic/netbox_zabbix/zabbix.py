@@ -63,17 +63,16 @@ class SonicNetboxZabbix_Zabbix:
         )
 
     @functools.cache
-    def hostgroup_site_get_or_create(self, name):
-        sites = self.api.hostgroup.get(
+    def hostgroup_get_or_create(self, name):
+        groups = self.api.hostgroup.get(
             filter={"name": name},
         )
-        log.debug(f"{name}:sites:{sites}")
-        if len(sites) >= 1:
-            log.debug(f"{name}:sites[0]:{sites[0]}")
-            groupid = sites[0]["groupid"]
+        log.debug(f"{name}:groups:{groups}")
+        if len(groups) >= 1:
+            log.debug(f"{name}:groups[0]:{groups[0]}")
+            groupid = groups[0]["groupid"]
         else:
-            if config.verbose >= 4:
-                log.debug(f"TRACE:create group:{name}")
+            log.debug(f"create group:{name}")
             groupid = self.api.hostgroup.create(name=name)["groupids"][0]
 
         log.debug(f"returning groupid:{groupid}")

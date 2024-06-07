@@ -394,8 +394,7 @@ class SonicNetboxZabbix:
                 log.warning(f"{name}: No such host in netbox data")
 
     @functools.cache
-    @staticmethod
-    def site_to_path(site) -> str:
+    def site_to_path(self, site) -> str:
 
         # region / group / provider / tenant / site
 
@@ -427,8 +426,25 @@ class SonicNetboxZabbix:
                     log.debug(f"TRACE:{name}: hostgroups:unfiltered: {hostgroups}")
                 hostgroups = [item for item in hostgroups if not item["name"].startswith("Sites/")]
                 hostgroups = [item for item in hostgroups if not item["name"].startswith("Sonic/")]
+                hostgroups = [item for item in hostgroups if not item["name"].endswith("Physical Servers")]
                 if config.verbose >= 4:
                     log.debug(f"TRACE:{name}: hostgroups:filtered: {hostgroups}")
+
+                if any(grp["name"] == "ALL" for grp in hostgroups):
+                    log.debug(f"Hostgroup ALL already present")
+                else:
+                    log.info(f"Adding Hostgroup ALL to {name}")
+                    new_hostgroup = self.zabbix.hostgroup_get_or_create("ALL")
+                    hostgroups.append(new_hostgroup)
+
+                if self.netbox.is_physical(nbsrv):
+                    log.info(f"Adding Hostgroup Physical Servers to {name}")
+                    new_hostgroup = self.zabbix.hostgroup_get_or_create("Physical Servers")
+                    hostgroups.append(new_hostgroup)
+                else:
+                    log.debug(f"Virtual Server: {name}")
+
+                # Throw out everything but groupid:
                 hostgroups = [{"groupid": item["groupid"]} for item in hostgroups]
 
                 # sites
@@ -436,15 +452,20 @@ class SonicNetboxZabbix:
                 site.full_details()
                 hostgroup_path = self.site_to_path(site)
                 log.debug(f"{name}:hostgroup_path: {hostgroup_path}")
-                new_hostgroup = self.zabbix.hostgroup_site_get_or_create(hostgroup_path)
+                new_hostgroup = self.zabbix.hostgroup_get_or_create(hostgroup_path)
                 log.debug(f"{name}:new_hostgroup{new_hostgroup}")
                 hostgroups.append(new_hostgroup)
 
                 # Tenant
                 if nbsrv.tenant and nbsrv.tenant["display"]:
                     log.debug(f"{name}:adding hostgroup {nbsrv.tenant['display']}")
-                    new_hostgroup = self.zabbix.hostgroup_site_get_or_create(f"Sonic/{nbsrv.tenant['display']}")
+                    new_hostgroup = self.zabbix.hostgroup_get_or_create(f"Sonic/{nbsrv.tenant['display']}")
                     hostgroups.append(new_hostgroup)
+                    if self.netbox.is_physical(nbsrv):
+                        new_hostgroup = self.zabbix.hostgroup_get_or_create(
+                            f"Sonic/{nbsrv.tenant['display']}/Physical servers"
+                        )
+                        hostgroups.append(new_hostgroup)
 
                 log.debug(f"{name}:setting hostgroups: {hostgroups}")
                 self.zabbix.host_update_hostgroups(zbsrv["hostid"], hostgroups)
