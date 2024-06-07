@@ -383,6 +383,95 @@ class SonicNetboxZabbix:
                 if len(str(srv.comments)) >= 1:
                     inventory["notes"] = srv.comments
 
+                inventory["type"] = srv.role["display"]
+
+                if srv.site:
+                    srv.site.full_details()
+                    log.debug(f"Site Details: {pformat(dict(srv.site))}")
+                    if "latitude" in dict(srv.site) and srv.site["latitude"]:
+                        inventory["location_lat"] = srv.site["latitude"]
+                    if "longitude" in dict(srv.site) and srv.site["longitude"]:
+                        inventory["location_lon"] = srv.site["longitude"]
+
+                    site_info = []
+
+                    site_info.append(srv.site["display"])
+
+                    if "facility" in dict(srv.site) and srv.site["facility"]:
+                        site_info.append(srv.site["facility"])
+
+                    if "group" in dict(srv.site) and srv.site["group"]:
+                        site_info.append(srv.site["group"]["display"])
+                    if "region" in dict(srv.site) and srv.site["region"]:
+                        site_info.append(srv.site["region"]["display"])
+                    if "tenant" in dict(srv.site) and srv.site["tenant"]:
+                        site_info.append(srv.site["tenant"]["display"])
+
+                    if "comments" in dict(srv.site) and srv.site["comments"]:
+                        site_info.append("")
+                        site_info.append(srv.site["comments"])
+
+                    if "physical_address" in dict(srv.site) and srv.site["physical_address"]:
+                        site_info.append("\nPhysical Address:")
+                        site_info.append(srv.site["physical_address"])
+
+                    if "shipping_address" in dict(srv.site) and srv.site["shipping_address"]:
+                        site_info.append("\nShipping Address:")
+                        site_info.append(srv.site["shipping_address"])
+
+                    log.debug(f"site_info: {site_info}")
+                    inventory["site_notes"] = "\n".join(site_info)
+                if self.netbox.is_virtual(srv):
+                    inventory["hardware"] = "Virtual"
+                    inventory["vendor"] = self.netbox.virt_type(srv)
+
+                if self.netbox.is_physical(srv):
+                    inventory["hardware"] = "Physical"  # Discard if have better answer
+                    if srv.device_type:
+                        inventory["hardware"] = srv.device_type["slug"]
+                        inventory["hardware_full"] = (
+                            f"{srv.device_type['manufacturer']['display']} {srv.device_type['display']}"
+                        )
+                        inventory["vendor"] = srv.device_type["manufacturer"]["display"]
+                        inventory["model"] = srv.device_type["display"]
+                    if srv.rack:
+                        inventory["site_rack"] = srv.rack["display"]
+                    if srv.serial:
+                        inventory["serialno_a"] = srv.serial
+                    if srv.asset_tag:
+                        inventory["asset_tag"] = srv.asset_tag
+
+                    if srv.location:
+                        srv.location.full_details()
+                        log.debug(f"Location Details: {pformat(dict(srv.location))}")
+                        location_info = []
+
+                        location_info.append(srv.location["display"])
+
+                        if "region" in dict(srv.location) and srv.location["region"]:
+                            location_info.append(srv.location["region"]["display"])
+                        if "site" in dict(srv.location) and srv.location["site"]:
+                            location_info.append(srv.location["site"]["display"])
+                        if "tenant" in dict(srv.location) and srv.location["tenant"]:
+                            location_info.append(srv.location["tenant"]["display"])
+
+                        # Potentially multi-line; put next to last
+                        if "description" in dict(srv.location) and srv.location["description"]:
+                            location_info.append(srv.location["description"])
+
+                        # Likely to be multi-line; put last
+                        if "physical_address" in dict(srv.location) and srv.location["physical_address"]:
+                            location_info.append("\nPhysical Address:")
+                            location_info.append(srv.location["physical_address"])
+
+                        inventory["location"] = "\n".join(location_info)
+
+                # Override if more specific on device:
+                if "latitude" in dict(srv) and srv.latitude:
+                    inventory["location_lat"] = srv.latitude
+                if "longitude" in dict(srv) and srv.longitude:
+                    inventory["location_lon"] = srv.longitude
+
                 if "oob_ip" in srv and len(str(srv.oob_ip)) > 1:
                     (inventory["oob_ip"], inventory["oob_netmask"]) = srv.oob_ip["address"].split("/")
 
