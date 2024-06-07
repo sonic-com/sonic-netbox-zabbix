@@ -265,6 +265,12 @@ class SonicNetboxZabbix:
                     tags = []
                 log.debug(f"{name} tags(1): {pformat(tags)}")
 
+                if self.netbox.is_virtual(srv):
+                    tags.append({"tag": "netbox-virt-type", "value": self.netbox.virt_type(srv)})
+
+                if self.netbox.is_physical(srv):
+                    tags.append({"tag": "netbox-device-type", "value": srv.device_type["slug"]})
+
                 if srv.status and srv.status["value"]:
                     tags.append({"tag": "netbox-status", "value": srv.status["value"]})
                     # If planned, don't notify at all

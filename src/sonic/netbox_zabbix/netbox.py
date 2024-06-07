@@ -103,3 +103,11 @@ class SonicNetboxZabbix_Netbox:
             return True
         else:
             return False
+
+    @functools.cache
+    def virt_type(self, server) -> bool:
+        if self.is_physical(server):
+            return False
+        else:
+            # TODO: look up virtual device cluster type
+            return "UNKNOWN"
