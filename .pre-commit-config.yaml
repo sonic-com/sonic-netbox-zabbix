@@ -12,4 +12,4 @@ repos:
     hooks:
     -   id: black
         language_version: python3.12
-        args: [ --preview, -l120 ]
+        args: [--target-version=py312, --target-version=py311, --preview, --line-length=120]
