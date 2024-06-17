@@ -117,6 +117,8 @@ class SonicNetboxZabbix_Netbox:
         elif server.cluster:
             cluster = self.get_cluster_by_id(server.cluster["id"])
             # server.cluster.full_details()
+            if not cluster or not cluster.type:
+                return False
             type = cluster.type["display"]
             if type.startswith("VMware"):
                 type = "VMware"
