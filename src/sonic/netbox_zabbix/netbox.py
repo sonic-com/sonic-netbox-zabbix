@@ -1,4 +1,5 @@
 import functools
+from pprint import pformat
 
 import pynetbox
 
@@ -105,9 +106,20 @@ class SonicNetboxZabbix_Netbox:
             return False
 
     @functools.cache
+    def get_cluster_by_id(self, id):
+        """This basically just exists for caching"""
+        return self.api.virtualization.cluster.get(id)
+
+    @functools.cache
     def virt_type(self, server) -> bool:
         if self.is_physical(server):
             return False
+        elif server.cluster:
+            cluster = self.get_cluster_by_id(server.cluster["id"])
+            # server.cluster.full_details()
+            type = cluster.type["display"]
+            if type.startswith("VMware"):
+                type = "VMware"
+            return type
         else:
-            # TODO: look up virtual device cluster type
             return "UNKNOWN"
