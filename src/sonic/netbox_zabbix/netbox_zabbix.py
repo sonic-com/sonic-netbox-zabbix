@@ -2,7 +2,7 @@ import functools
 import logging
 import logging.handlers
 import sys
-from pprint import pformat, pprint
+from pprint import pformat
 
 import configargparse
 
@@ -123,6 +123,10 @@ class SonicNetboxZabbix:
             "--skip-disables",
             action="store_true",
             help="Don't disable Zabbix hosts based on netbox data",
+        )
+
+        argparser.add(
+            "--skip-ipmi", action="store_true", help="Don't add IPMI interfaces to Physical Servers that have them"
         )
 
         return argparser.parse_args()
@@ -558,7 +562,7 @@ class SonicNetboxZabbix:
                     hostgroups.append(new_hostgroup)
                     if self.netbox.is_physical(nbsrv):
                         new_hostgroup = self.zabbix.hostgroup_get_or_create(
-                            f"Sonic/{nbsrv.tenant['display']}/Physical servers"
+                            f"Sonic/{nbsrv.tenant['display']}/Physical Servers"
                         )
                         hostgroups.append(new_hostgroup)
 
@@ -586,6 +590,7 @@ class SonicNetboxZabbix:
                     "planned",
                     "inventory",
                     "failed",
+                    "offline",
                 ]:
                     log.debug(f"In-Active Host {name}/{nbsrv.status['value']}")
                     self.zabbix.host_disable(zbsrv)
@@ -608,6 +613,17 @@ class SonicNetboxZabbix:
                         log.info(f"Skipping non-SOC host {name}")
                 else:
                     log.warning(f"No tenant on {name}")
+
+    def copy_netbox_ipmi_to_zabbix(self, netbox_servers, zabbix_servers):
+        for name in zabbix_servers:
+            if name in netbox_servers and netbox_servers[name]:
+                if config.verbose >= 4:
+                    log.debug(f"TRACE:{name}:IPMI")
+                nbsrv = netbox_servers[name]
+                zbsrv = zabbix_servers[name]
+                # nbsrv.full_details()
+                if config.verbose >= 3:
+                    log.debug(pformat(dict(nbsrv)))
 
     def run(self):
         """Run cli app with the given arguments."""
@@ -652,6 +668,9 @@ class SonicNetboxZabbix:
                 netbox_server_dict[netbox_server_name] = netbox_server
 
         self.copy_zabbix_hostid_to_netbox(zabbix_server_dict, netbox_server_dict)
+
+        if not config.skip_ipmi:
+            self.copy_netbox_ipmi_to_zabbix(netbox_server_dict, zabbix_notdiscovered_dict)
 
         if not config.skip_macros:
             self.copy_netbox_info_to_zabbix_macros(netbox_server_dict, zabbix_server_dict)
