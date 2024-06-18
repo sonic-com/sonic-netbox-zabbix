@@ -108,17 +108,27 @@ class SonicNetboxZabbix_Netbox:
     @functools.cache
     def get_cluster_by_id(self, id):
         """This basically just exists for caching"""
-        return self.api.virtualization.cluster.get(id)
+        return self.api.virtualization.clusters.get(id)
 
     @functools.cache
     def virt_type(self, server) -> bool:
+        log.debug(server)
         if self.is_physical(server):
+            log.debug("Physical Server")
             return False
         elif server.cluster:
+            log.debug("Has a cluster")
+            log.debug(server.cluster)
+            log.debug(pformat(dict(server.cluster)))
             cluster = self.get_cluster_by_id(server.cluster["id"])
+            log.debug(f"resulting cluster: {pformat(cluster)}")
             # server.cluster.full_details()
             if not cluster or not cluster.type:
+                log.debug("No cluster or cluster.type")
                 return False
+
+            log.debug(pformat(dict(cluster)))
+
             type = cluster.type["display"]
             if type.startswith("VMware"):
                 type = "VMware"
