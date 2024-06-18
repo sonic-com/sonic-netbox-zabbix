@@ -127,13 +127,13 @@ yaml = ["PyYAML"]
 
 [[package]]
 name = "hvac"
-version = "2.2.0"
+version = "2.3.0"
 description = "HashiCorp Vault API client"
 optional = true
 python-versions = "<4.0,>=3.8"
 files = [
-    {file = "hvac-2.2.0-py3-none-any.whl", hash = "sha256:f287a19940c6fc518c723f8276cc9927f7400734303ee5872ac2e84539466d8d"},
-    {file = "hvac-2.2.0.tar.gz", hash = "sha256:e4b0248c5672cb9a6f5974e7c8f5271a09c6c663cbf8ab11733a227f3d2db2c2"},
+    {file = "hvac-2.3.0-py3-none-any.whl", hash = "sha256:a3afc5710760b6ee9b3571769df87a0333da45da05a5f9f963e1d3925a84be7d"},
+    {file = "hvac-2.3.0.tar.gz", hash = "sha256:1b85e3320e8642dd82f234db63253cda169a817589e823713dc5fca83119b1e2"},
 ]
 
 [package.dependencies]
@@ -218,13 +218,13 @@ reference = "sonic"
 
 [[package]]
 name = "urllib3"
-version = "2.2.1"
+version = "2.2.2"
 description = "HTTP library with thread-safe connection pooling, file post, and more."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "urllib3-2.2.1-py3-none-any.whl", hash = "sha256:450b20ec296a467077128bff42b73080516e71b56ff59a60a02bef2232c4fa9d"},
-    {file = "urllib3-2.2.1.tar.gz", hash = "sha256:d0570876c61ab9e520d776c38acbbb5b05a776d3f9ff98a5c8fd5162a444cf19"},
+    {file = "urllib3-2.2.2-py3-none-any.whl", hash = "sha256:a448b2f64d686155468037e1ace9f2d2199776e17f0a46610480d311f73e3472"},
+    {file = "urllib3-2.2.2.tar.gz", hash = "sha256:dd505485549a7a552833da5e6063639d0d177c04f23bc3864e41e5dc5f612168"},
 ]
 
 [package.extras]
