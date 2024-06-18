@@ -211,6 +211,22 @@ class SonicNetboxZabbix:
                         }
                     )
 
+                if self.netbox.is_virtual(srv) and self.netbox.virt_type(srv):
+                    macros.append(
+                        {
+                            "macro": "{$NETBOX.VIRT_TYPE}",
+                            "value": self.netbox.virt_type(srv),
+                        }
+                    )
+
+                if self.netbox.is_physical(srv) and self.netbox.virt_type(srv):
+                    macros.append(
+                        {
+                            "macro": "{$NETBOX.VIRT_CLUSTER_TYPE}",
+                            "value": self.netbox.virt_type(srv),
+                        }
+                    )
+
                 macros.append(
                     {
                         "macro": "{$NETBOX.DATE.CREATED}",
@@ -271,6 +287,9 @@ class SonicNetboxZabbix:
 
                 if self.netbox.is_virtual(srv) and self.netbox.virt_type(srv):
                     tags.append({"tag": "netbox-virt-type", "value": self.netbox.virt_type(srv)})
+
+                if self.netbox.is_physical(srv) and self.netbox.virt_type(srv):
+                    tags.append({"tag": "netbox-virt-cluster-type", "value": self.netbox.virt_type(srv)})
 
                 if self.netbox.is_physical(srv) and srv.device_type and srv.device_type["slug"]:
                     tags.append({"tag": "netbox-device-type", "value": srv.device_type["slug"]})
@@ -427,7 +446,8 @@ class SonicNetboxZabbix:
                     inventory["site_notes"] = "\n".join(site_info)
                 if self.netbox.is_virtual(srv):
                     inventory["hardware"] = "Virtual"
-                    inventory["vendor"] = self.netbox.virt_type(srv)
+                    if self.netbox.virt_type(srv):
+                        inventory["vendor"] = self.netbox.virt_type(srv)
 
                 if self.netbox.is_physical(srv):
                     inventory["hardware"] = "Physical"  # Discard if have better answer
