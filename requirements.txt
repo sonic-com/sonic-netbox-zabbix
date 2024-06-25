@@ -7,3 +7,5 @@ pynetbox==7.3.3 ; python_version >= "3.11" and python_version < "4.0"
 requests==2.32.3 ; python_version >= "3.11" and python_version < "4.0"
 urllib3==2.2.2 ; python_version >= "3.11" and python_version < "4.0"
 zabbix-utils==2.0.0 ; python_version >= "3.11" and python_version < "4.0"
+--extra-index-url https://repo.sonic.net/sonic_python_packages
+sonic-logger
