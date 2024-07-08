@@ -548,12 +548,15 @@ class SonicNetboxZabbix:
 
                 # sites
                 site = nbsrv.site
-                site.full_details()
-                hostgroup_path = self.site_to_path(site)
-                log.debug(f"{name}:hostgroup_path: {hostgroup_path}")
-                new_hostgroup = self.zabbix.hostgroup_get_or_create(hostgroup_path)
-                log.debug(f"{name}:new_hostgroup{new_hostgroup}")
-                hostgroups.append(new_hostgroup)
+                if site:
+                    site.full_details()
+                    hostgroup_path = self.site_to_path(site)
+                    log.debug(f"{name}:hostgroup_path: {hostgroup_path}")
+                    new_hostgroup = self.zabbix.hostgroup_get_or_create(hostgroup_path)
+                    log.debug(f"{name}:new_hostgroup{new_hostgroup}")
+                    hostgroups.append(new_hostgroup)
+                else:
+                    log.debug(f"{name}:No site?")
 
                 # Tenant
                 if nbsrv.tenant and nbsrv.tenant["display"]:
