@@ -250,4 +250,4 @@ async = ["aiohttp (>=3,<4)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "633fb6066b4824ccde42bf7d8bd05055afd55cbf6fe0794ba394010a086b6538"
+content-hash = "d3e9a23eedf13c67c0950792c596d80b992d6f512084b91157f61e7afbc976ae"

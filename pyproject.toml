@@ -18,6 +18,11 @@ name = "sonic"
 url = "https://repo.sonic.net/sonic_python_packages"
 priority = "supplemental"
 
+[[tool.poetry.source]]
+name = "sonic_pypi"
+url = "https://repo.sonic.net/sonic_pypi"
+priority = "supplemental"
+
 [tool.poetry.dependencies]
 python = "^3.11"
 ConfigArgParse = "^1.7"
