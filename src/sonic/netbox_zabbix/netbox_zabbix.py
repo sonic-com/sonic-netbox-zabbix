@@ -126,7 +126,7 @@ class SonicNetboxZabbix:
         )
 
         argparser.add(
-            "--skip-ipmi", action="store_true", help="Don't add IPMI interfaces to Physical Servers that have them"
+            "--skip-ipmi", action="store_true", help="Don't add IPMI interfaces to Physical Devices that have them"
         )
 
         return argparser.parse_args()
@@ -545,7 +545,7 @@ class SonicNetboxZabbix:
                     log.debug(f"TRACE:{name}: hostgroups:unfiltered: {hostgroups}")
                 hostgroups = [item for item in hostgroups if not item["name"].startswith("Sites/")]
                 hostgroups = [item for item in hostgroups if not item["name"].startswith("Sonic/")]
-                hostgroups = [item for item in hostgroups if not item["name"].endswith("Physical Servers")]
+                hostgroups = [item for item in hostgroups if not item["name"].endswith("Physical Devices")]
                 if config.verbose >= 4:
                     log.debug(f"TRACE:{name}: hostgroups:filtered: {hostgroups}")
 
@@ -557,8 +557,8 @@ class SonicNetboxZabbix:
                     hostgroups.append(new_hostgroup)
 
                 if self.netbox.is_physical(nbsrv):
-                    log.info(f"Adding Hostgroup Physical Servers to {name}")
-                    new_hostgroup = self.zabbix.hostgroup_get_or_create("Physical Servers")
+                    log.info(f"Adding Hostgroup Physical Devices to {name}")
+                    new_hostgroup = self.zabbix.hostgroup_get_or_create("Physical Devices")
                     hostgroups.append(new_hostgroup)
                 else:
                     log.debug(f"Virtual Server: {name}")
@@ -585,7 +585,7 @@ class SonicNetboxZabbix:
                     hostgroups.append(new_hostgroup)
                     if self.netbox.is_physical(nbsrv):
                         new_hostgroup = self.zabbix.hostgroup_get_or_create(
-                            f"Sonic/{nbsrv.tenant['display']}/Physical Servers"
+                            f"Sonic/{nbsrv.tenant['display']}/Physical Devices"
                         )
                         hostgroups.append(new_hostgroup)
 
