@@ -1,9 +1,11 @@
-certifi==2024.6.2 ; python_version >= "3.11" and python_version < "4.0"
+certifi==2024.7.4 ; python_version >= "3.11" and python_version < "4.0"
 charset-normalizer==3.3.2 ; python_version >= "3.11" and python_version < "4.0"
 configargparse==1.7 ; python_version >= "3.11" and python_version < "4.0"
 idna==3.7 ; python_version >= "3.11" and python_version < "4.0"
 packaging==23.2 ; python_version >= "3.11" and python_version < "4.0"
-pynetbox==7.3.3 ; python_version >= "3.11" and python_version < "4.0"
+pynetbox==7.3.4 ; python_version >= "3.11" and python_version < "4.0"
 requests==2.32.3 ; python_version >= "3.11" and python_version < "4.0"
-urllib3==2.2.1 ; python_version >= "3.11" and python_version < "4.0"
+urllib3==2.2.2 ; python_version >= "3.11" and python_version < "4.0"
 zabbix-utils==2.0.0 ; python_version >= "3.11" and python_version < "4.0"
+--extra-index-url https://repo.sonic.net/sonic_python_packages
+sonic-logger

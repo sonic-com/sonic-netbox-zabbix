@@ -38,10 +38,12 @@ class SonicNetboxZabbix_Netbox:
     @functools.cache
     def get_vms_all(self) -> list:
         """Get all VMs from Netbox"""
+        log.debug("Get all VMs from Netbox")
         return list(self.vms.all())
 
     @functools.cache
     def get_vms_active_soc_server(self) -> list:
+        log.debug("Get active SOC server VMs")
         vms = self.get_vms_all()
         return list(self.vms.filter(role="server", tenant="soc", status="active"))
 
@@ -50,10 +52,12 @@ class SonicNetboxZabbix_Netbox:
     ####################
     @functools.cache
     def get_devices_all(self):
+        log.debug("Get all devices")
         return self.devices.all()
 
     @functools.cache
     def get_devices_active_soc_server(self) -> list:
+        log.debug("Get Active SOC server devices")
         return list(self.devices.filter(role="server", tenant="soc", status="active"))
 
     ##########################
@@ -61,12 +65,14 @@ class SonicNetboxZabbix_Netbox:
     ##########################
     @functools.cache
     def get_hosts_all(self) -> list:
+        log.debug("Get all hosts")
         vms = self.get_vms_all()
         devices = self.get_devices_all()
         return list(vms) + list(devices)
 
     @functools.cache
     def get_hosts_active_soc_server(self) -> list:
+        log.debug("Get all active soc server hosts")
         vms = self.get_vms_active_soc_server()
         devices = self.get_devices_active_soc_server()
         return list(vms) + list(devices)
@@ -77,14 +83,17 @@ class SonicNetboxZabbix_Netbox:
 
     @functools.cache
     def get_regions_all(self):
+        log.debug("Get all regions")
         return self.api.dcim.regions.all()
 
     @functools.cache
     def get_sites_all(self):
+        log.debug("Get all sites")
         return self.api.dcim.sites.all()
 
     @functools.cache
     def get_sites_smart_filter(self) -> list:
+        log.debug("Get sites that have at least 1 device")
         sites = []
         for site in self.get_sites_all():
             if site.device_count >= 1:
@@ -93,6 +102,7 @@ class SonicNetboxZabbix_Netbox:
 
     @functools.cache
     def is_physical(self, server) -> bool:
+        log.debug(server)
         if "device_type" in dict(server):
             return True
         else:
@@ -100,6 +110,7 @@ class SonicNetboxZabbix_Netbox:
 
     @functools.cache
     def is_virtual(self, server) -> bool:
+        log.debug(server)
         if "memory" in dict(server):
             return True
         else:
@@ -108,18 +119,19 @@ class SonicNetboxZabbix_Netbox:
     @functools.cache
     def get_cluster_by_id(self, id):
         """This basically just exists for caching"""
+        log.debug(id)
         return self.api.virtualization.clusters.get(id)
 
     @functools.cache
     def virt_type(self, server) -> bool:
         log.debug(server)
-        if self.is_physical(server):
-            log.debug("Physical Server")
-            return False
-        elif server.cluster:
+        if config.verbose >= 4:
+            log.debug(pformat(dict(server)))
+        if server.cluster:
             log.debug("Has a cluster")
             log.debug(server.cluster)
-            log.debug(pformat(dict(server.cluster)))
+            if config.verbose >= 4:
+                log.debug(pformat(dict(server.cluster)))
             cluster = self.get_cluster_by_id(server.cluster["id"])
             log.debug(f"resulting cluster: {pformat(cluster)}")
             # server.cluster.full_details()
@@ -134,4 +146,5 @@ class SonicNetboxZabbix_Netbox:
                 type = "VMware"
             return type
         else:
-            return "UNKNOWN"
+            log.debug("No server.cluster")
+            return False
