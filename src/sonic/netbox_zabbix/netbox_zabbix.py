@@ -645,8 +645,10 @@ class SonicNetboxZabbix:
                 nbsrv = netbox_servers[name]
                 zbsrv = zabbix_servers[name]
                 # nbsrv.full_details()
-                if config.verbose >= 3:
+                if config.verbose >= 4:
                     log.debug(pformat(dict(nbsrv)))
+                ipmi_ip = self.netbox.get_ipmi_ip(nbsrv)
+                log.debug(f"{name}:IPMI IP: {ipmi_ip}")
 
     def run(self):
         """Run cli app with the given arguments."""
