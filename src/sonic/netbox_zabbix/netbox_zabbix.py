@@ -406,7 +406,8 @@ class SonicNetboxZabbix:
                 if len(str(srv.comments)) >= 1:
                     inventory["notes"] = srv.comments
 
-                inventory["type"] = srv.role["display"]
+                if srv.role and srv.role["display"]:
+                    inventory["type"] = srv.role["display"]
 
                 if srv.site:
                     srv.site.full_details()
