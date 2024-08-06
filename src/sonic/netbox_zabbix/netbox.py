@@ -148,3 +148,35 @@ class SonicNetboxZabbix_Netbox:
         else:
             log.debug("No server.cluster")
             return False
+
+    @functools.cache
+    def get_ipmi_ip(self, server) -> str:
+        ipmask = False
+
+        if self.is_virtual(server):
+            return False
+
+        log.debug(f"Server: {server}")
+        if config.verbose >= 4:
+            log.debug(pformat(dict(server)))
+        if server.oob_ip:
+            log.debug("Has oob_ip")
+            ipmask = server.oob_ip["address"]
+        else:
+            log.debug("No oob_ip")
+            ipmi_interface = self.api.dcim.interfaces.get(name="IPMI", device_id=server.id)
+            if ipmi_interface:
+                log.debug(f"IPMI interface: {ipmi_interface}")
+                ipmi_ip = self.api.ipam.ip_addresses.get(interface_id=ipmi_interface.id)
+                if ipmi_ip:
+                    ipmask = str(ipmi_ip)
+                log.debug(f"IP from IPMI interface: {ipmask}")
+            else:
+                log.debug("No IPMI interface")
+
+        if ipmask:
+            ip = ipmask.split("/")[0]
+            log.info(f"IPMI IP for {server} is {ip}")
+            return ip
+        else:
+            return False
