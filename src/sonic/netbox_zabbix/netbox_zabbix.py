@@ -648,7 +648,11 @@ class SonicNetboxZabbix:
                 if config.verbose >= 4:
                     log.debug(pformat(dict(nbsrv)))
                 ipmi_ip = self.netbox.get_ipmi_ip(nbsrv)
-                log.debug(f"{name}:IPMI IP: {ipmi_ip}")
+                if ipmi_ip:
+                    log.debug(f"{name}:IPMI IP: {ipmi_ip}")
+                    self.zabbix.set_ipmi_interface(zbsrv, ipmi_ip)
+                else:
+                    log.debug(f"{name}: no IPMI IP")
 
     def run(self):
         """Run cli app with the given arguments."""

@@ -60,6 +60,7 @@ class SonicNetboxZabbix_Zabbix:
             selectHostGroups=["groupid", "name"],
             selectMacros=["macro", "value", "description", "type"],
             selectParentTemplates=["templateid", "name"],
+            selectInterfaces="extend",
         )
 
     @functools.cache
@@ -128,3 +129,10 @@ class SonicNetboxZabbix_Zabbix:
         else:
             log.debug(f"Already enabled host {host['name']}/{hostid}")
             return False
+
+    def set_ipmi_interface(self, host, ipmi_ip):
+        hostid = host["hostid"]
+        if config.verbose >= 4:
+            log.debug(f"TRACE:{hostid}")
+        if config.verbose >= 5:
+            log.debug(f"TRACE:host:pformat:{pformat(host)}")
