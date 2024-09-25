@@ -142,7 +142,7 @@ class SonicNetboxZabbix_Netbox:
             log.debug(pformat(dict(cluster)))
 
             type = cluster.type["display"]
-            if type.startswith("VMware"):
+            if type and type.startswith("VMware"):
                 type = "VMware"
             return type
         else:
@@ -159,7 +159,7 @@ class SonicNetboxZabbix_Netbox:
         log.debug(f"Server: {server}")
         if config.verbose >= 4:
             log.debug(pformat(dict(server)))
-        if server.oob_ip:
+        if server.oob_ip and server.oob_ip["address"]:
             log.debug("Has oob_ip")
             ipmask = server.oob_ip["address"]
         else:
