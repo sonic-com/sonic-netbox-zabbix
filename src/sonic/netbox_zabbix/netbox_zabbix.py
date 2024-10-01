@@ -104,6 +104,11 @@ class SonicNetboxZabbix:
             help="Don't update Zabbix Macros from netbox data",
         )
         argparser.add(
+            "--skip-services",
+            action="store_true",
+            help="Don't update Zabbix ports macros from netbox service data",
+        )
+        argparser.add(
             "--skip-tags",
             action="store_true",
             help="Don't update Zabbix Tags from netbox data",
@@ -515,7 +520,6 @@ class SonicNetboxZabbix:
 
     @functools.cache
     def site_to_path(self, site) -> str:
-
         # region / group / provider / tenant / site
 
         parts = ["Sites"]
@@ -655,6 +659,94 @@ class SonicNetboxZabbix:
                 else:
                     log.debug(f"{name}: no IPMI IP")
 
+    def copy_netbox_services_to_zabbix(self, netbox_servers, zabbix_servers):
+        """_Copy Netbox Service info to Zabbix_
+
+        1. Pull TCP Services tagged offnet-ports-open into {$TCP_OPEN_PORTS}.
+        2. Pull UDP Services tagged offnet-ports-open into {$UDP_OPEN_PORTS}.
+
+        Format of Macros is comma-separated numeric ports, like `22,80,443`.
+
+        Sort ports numerically just to reduce change churn.
+
+        Args:
+            netbox_servers (_list_): _Netbox Servers_
+            zabbix_servers (_list_): _Zabbix Servers_
+        """
+        for name in zabbix_servers:
+            if name in netbox_servers and netbox_servers[name]:
+                if config.verbose >= 4:  # 4
+                    log.debug(f"TRACE:{name}:Services")
+                nbsrv = netbox_servers[name]
+                zbsrv = zabbix_servers[name]
+
+                if config.verbose >= 4:  # 4
+                    log.debug(pformat(dict(nbsrv)))
+
+                services = self.netbox.get_server_services_offnet(nbsrv)
+                # log.warning(pformat(services))
+
+                open_tcp_ports = []
+                open_udp_ports = []
+                for service in services:
+                    log.warning(pformat(dict(service)))
+                    if service.protocol.value == "tcp":
+                        open_tcp_ports.extend(service.ports)
+                    elif service.protocol.value == "udp":
+                        open_udp_ports.extend(service.ports)
+                    else:
+                        log.error(f"Unknown port protocol {service.protocol.label}")
+                        log.debug(pformat(service))
+
+                # Make sure order stays the same:
+                open_tcp_ports.sort()
+                open_udp_ports.sort()
+
+                # Stringify those ints
+                open_tcp_ports = list(map(str, open_tcp_ports))
+                open_udp_ports = list(map(str, open_udp_ports))
+
+                log.warning(f"open_tcp_ports: {open_tcp_ports}")
+                log.warning(f"open_udp_ports: {open_udp_ports}")
+
+                # Pull current macros in, minus {$TCP_OPEN_PORTS} and {$UDP_OPEN_PORTS}
+                if "macros" in zabbix_servers[name]:
+                    macros = zabbix_servers[name]["macros"]
+                    log.debug(f"macros(pre): {pformat(macros)}")
+                    macros = [item for item in macros if not item["macro"].startswith("{$TCP_OPEN_PORTS}")]
+                    macros = [item for item in macros if not item["macro"].startswith("{$UDP_OPEN_PORTS}")]
+                else:
+                    macros = []
+                log.debug(f"macros(post): {pformat(macros)}")
+
+                if open_tcp_ports and len(open_tcp_ports) >= 1:
+                    macros.append(
+                        {
+                            "macro": "{$TCP_OPEN_PORTS}",
+                            "value": ",".join(open_tcp_ports),
+                            "description": "Synced from Netbox based on offnet-ports-open tag on services",
+                        }
+                    )
+
+                if open_udp_ports and len(open_udp_ports) >= 1:
+                    macros.append(
+                        {
+                            "macro": "{$UDP_OPEN_PORTS}",
+                            "value": ",".join(open_udp_ports),
+                            "description": "Synced from Netbox based on offnet-ports-open tag on services",
+                        }
+                    )
+
+                # Actually save changes #
+                if macros:
+                    log.debug(f"Macros for {name}: {pformat(macros)}")
+                    self.zabbix.host_update_macros(
+                        hostid=zabbix_servers[name]["hostid"],
+                        macros=macros,
+                    )
+                else:
+                    log.warning(f"No Macros updates for {name}")
+
     def run(self):
         """Run cli app with the given arguments."""
         log.debug("Starting run()")
@@ -704,6 +796,9 @@ class SonicNetboxZabbix:
 
         if not config.skip_macros:
             self.copy_netbox_info_to_zabbix_macros(netbox_server_dict, zabbix_server_dict)
+
+        if not config.skip_services:
+            self.copy_netbox_services_to_zabbix(netbox_server_dict, zabbix_server_dict)
 
         if not config.skip_tags:
             self.copy_netbox_info_to_zabbix_tags(netbox_server_dict, zabbix_server_dict)

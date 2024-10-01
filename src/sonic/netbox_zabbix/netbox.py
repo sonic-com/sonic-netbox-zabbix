@@ -101,6 +101,38 @@ class SonicNetboxZabbix_Netbox:
         return sites
 
     @functools.cache
+    def get_cluster_by_id(self, id):
+        """This basically just exists for caching"""
+        log.debug(id)
+        return self.api.virtualization.clusters.get(id)
+
+    ##########################
+    # Individual Server Info #
+    ##########################
+
+    @functools.cache
+    def get_server_services_all(self, server):
+        log.warning(server)
+        server_id = server.id
+        if self.is_virtual(server):
+            services = self.api.ipam.services.filter(virtual_machine_id=server_id)
+        else:
+            services = self.api.ipam.services.filter(device_id=server_id)
+        log.warning(f"services count: {len(services)}")
+        return list(services)
+
+    @functools.cache
+    def get_server_services_offnet(self, server):
+        log.warning(server)
+        server_id = server.id
+        if self.is_virtual(server):
+            services = self.api.ipam.services.filter(tag="offnet-ports-open", virtual_machine_id=server_id)
+        else:
+            services = self.api.ipam.services.filter(tag="offnet-ports-open", device_id=server_id)
+        log.warning(f"services count: {len(services)}")
+        return list(services)
+
+    @functools.cache
     def is_physical(self, server) -> bool:
         log.debug(server)
         if "device_type" in dict(server):
@@ -115,12 +147,6 @@ class SonicNetboxZabbix_Netbox:
             return True
         else:
             return False
-
-    @functools.cache
-    def get_cluster_by_id(self, id):
-        """This basically just exists for caching"""
-        log.debug(id)
-        return self.api.virtualization.clusters.get(id)
 
     @functools.cache
     def virt_type(self, server) -> bool:
