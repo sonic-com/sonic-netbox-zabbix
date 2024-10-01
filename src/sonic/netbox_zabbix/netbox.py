@@ -112,24 +112,24 @@ class SonicNetboxZabbix_Netbox:
 
     @functools.cache
     def get_server_services_all(self, server):
-        log.warning(server)
+        log.debug(server)
         server_id = server.id
         if self.is_virtual(server):
             services = self.api.ipam.services.filter(virtual_machine_id=server_id)
         else:
             services = self.api.ipam.services.filter(device_id=server_id)
-        log.warning(f"services count: {len(services)}")
+
         return list(services)
 
     @functools.cache
     def get_server_services_offnet(self, server):
-        log.warning(server)
+        log.debug(server)
         server_id = server.id
         if self.is_virtual(server):
             services = self.api.ipam.services.filter(tag="offnet-ports-open", virtual_machine_id=server_id)
         else:
             services = self.api.ipam.services.filter(tag="offnet-ports-open", device_id=server_id)
-        log.warning(f"services count: {len(services)}")
+
         return list(services)
 
     @functools.cache
