@@ -268,17 +268,14 @@ class SonicNetboxZabbix:
 
                     for tag in srv.tags:
                         tags.append(tag["slug"])
-                        macros.append({
-                            "macro": ('{$NETBOX.TAG.' + tag["slug"].replace('-','_').upper() + '}'),
-                            "value": tag["display"],
-                        })
-                        
-                macros.append(
-                    {
-                        "macro": "{$NETBOX.TAGS}",
-                        "value": json.dumps(tags)
-                    }
-                )
+                        macros.append(
+                            {
+                                "macro": ("{$NETBOX.TAG." + tag["slug"].replace("-", "_").upper() + "}"),
+                                "value": tag["display"],
+                            }
+                        )
+
+                macros.append({"macro": "{$NETBOX.TAGS}", "value": json.dumps(tags)})
 
                 # Actually save changes #
                 if macros:
