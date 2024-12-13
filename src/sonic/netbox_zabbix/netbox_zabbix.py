@@ -271,7 +271,8 @@ class SonicNetboxZabbix:
                         macros.append(
                             {
                                 "macro": ("{$NETBOX.TAG." + tag["slug"].replace("-", "_").upper() + "}"),
-                                "value": tag["display"],
+                                "value": tag["slug"],
+                                "description": tag["display"],
                             }
                         )
 
