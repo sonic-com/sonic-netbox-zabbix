@@ -709,13 +709,13 @@ class SonicNetboxZabbix:
                 open_tcp_ports = []
                 open_udp_ports = []
                 for service in services:
-                    log.warning(pformat(dict(service)))
+                    log.debug(pformat(dict(service)))
                     if service.protocol.value == "tcp":
                         open_tcp_ports.extend(service.ports)
                     elif service.protocol.value == "udp":
                         open_udp_ports.extend(service.ports)
                     else:
-                        log.error(f"Unknown port protocol {service.protocol.label}")
+                        log.warning(f"Unknown port protocol {service.protocol.label}")
                         log.debug(pformat(service))
 
                 # Make sure order stays the same:
@@ -726,8 +726,8 @@ class SonicNetboxZabbix:
                 open_tcp_ports = list(map(str, open_tcp_ports))
                 open_udp_ports = list(map(str, open_udp_ports))
 
-                log.warning(f"open_tcp_ports: {open_tcp_ports}")
-                log.warning(f"open_udp_ports: {open_udp_ports}")
+                log.info(f"open_tcp_ports: {open_tcp_ports}")
+                log.info(f"open_udp_ports: {open_udp_ports}")
 
                 # Pull current macros in, minus {$TCP_OPEN_PORTS} and {$UDP_OPEN_PORTS}
                 if "macros" in zabbix_servers[name]:
@@ -765,7 +765,7 @@ class SonicNetboxZabbix:
                         macros=macros,
                     )
                 else:
-                    log.warning(f"No Macros updates for {name}")
+                    log.info(f"No Macros updates for {name}")
 
     def run(self):
         """Run cli app with the given arguments."""
