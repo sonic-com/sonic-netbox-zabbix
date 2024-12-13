@@ -2,6 +2,7 @@ import functools
 import logging
 import logging.handlers
 import sys
+import json
 from pprint import pformat
 
 import configargparse
@@ -261,19 +262,23 @@ class SonicNetboxZabbix:
                     log.warning(f"No update_group for {name}")
 
                 # Populate some macros with netbox tag info:
+                log.info(f"{name}: Updating $NETBOX.TAGS")
+                tags = []
                 if srv.tags:
-                    log.info(f"{name}: Updating $NETBOX.TAGS")
-                    tags = []
 
                     for tag in srv.tags:
                         tags.append(tag["slug"])
+                        macros.append({
+                            "macro": ('{$NETBOX.TAG.' + tag["slug"].replace('-','_').upper() + '}'),
+                            "value": tag["display"],
+                        })
                         
-                    macros.append(
-                        {
-                            "macro": "{$NETBOX.TAGS}",
-                            "value": str(tags)
-                        }
-                    )
+                macros.append(
+                    {
+                        "macro": "{$NETBOX.TAGS}",
+                        "value": json.dumps(tags)
+                    }
+                )
 
                 # Actually save changes #
                 if macros:
