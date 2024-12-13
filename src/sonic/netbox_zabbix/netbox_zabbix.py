@@ -260,6 +260,21 @@ class SonicNetboxZabbix:
                 else:
                     log.warning(f"No update_group for {name}")
 
+                # Populate some macros with netbox tag info:
+                if srv.tags:
+                    log.info(f"{name}: Updating $NETBOX.TAGS")
+                    tags = []
+
+                    for tag in srv.tags:
+                        tags.append(tag["slug"])
+                        
+                    macros.append(
+                        {
+                            "macro": "{$NETBOX.TAGS}",
+                            "value": str(tags)
+                        }
+                    )
+
                 # Actually save changes #
                 if macros:
                     log.debug(f"Macros for {name}: {pformat(macros)}")
