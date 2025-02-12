@@ -340,8 +340,6 @@ class SonicNetboxZabbix:
 
                 if srv.tenant and srv.tenant["slug"]:
                     tags.append({"tag": "netbox-tenant", "value": srv.tenant["slug"]})
-                    if srv.tenant["slug"] == "soc-special-use":
-                        tags = self.add_tag_nodupe(tags, {"tag": "sonic-alerting", "value": "nonotice"})
 
                 if srv.role and srv.role["slug"]:
                     tags.append({"tag": "netbox-role", "value": srv.role["slug"]})
