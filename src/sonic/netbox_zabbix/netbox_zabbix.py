@@ -857,8 +857,8 @@ class SonicNetboxZabbix:
                         {"templateid": 13084},  # NOC Juniper MX by SNMP
                     ],
                 )
-                log.error("Aborting after creating 1 host")
-                sys.exit(5)
+                log.error("Aborting after creating 1 host")  # FIXME
+                return  # FIXME
 
     def run(self):
         """Run cli app with the given arguments."""
