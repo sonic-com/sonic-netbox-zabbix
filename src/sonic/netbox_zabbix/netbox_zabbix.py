@@ -809,7 +809,11 @@ class SonicNetboxZabbix:
             else:
                 log.debug(f"checking juniper {nbjuniper}")
 
-            if "zabbix_host_id" in nbjuniper.custom_fields and nbjuniper.custom_fields["zabbix_host_id"] and nbjuniper.custom_fields["zabbix_host_id"] > 0:
+            if (
+                "zabbix_host_id" in nbjuniper.custom_fields
+                and nbjuniper.custom_fields["zabbix_host_id"]
+                and nbjuniper.custom_fields["zabbix_host_id"] > 0
+            ):
                 log.info("Skipping because already in zabbix")
             elif any(tag["slug"] == "noc-unmanaged" for tag in nbjuniper.tags):
                 log.info("Skipping because of noc-unmanaged tag")
@@ -860,8 +864,6 @@ class SonicNetboxZabbix:
                         {"templateid": 13084},  # NOC Juniper MX by SNMP
                     ],
                 )
-                log.error("Aborting after creating 1 host")  # FIXME
-                return  # FIXME
 
     def run(self):
         """Run cli app with the given arguments."""
