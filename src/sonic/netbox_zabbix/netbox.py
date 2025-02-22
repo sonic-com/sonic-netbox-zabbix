@@ -60,6 +60,12 @@ class SonicNetboxZabbix_Netbox:
         log.debug("Get Active SOC server devices")
         return list(self.devices.filter(role="server", tenant="soc", status="active"))
 
+    @functools.cache
+    def get_devices_juniper_noc(self) -> list:
+        log.debug("Get Active/Staged NOC Junipers")
+        # https://netbox.noc.sonic.net/dcim/devices/?status=active&status=staged&manufacturer_id=5&tenant_id=5
+        return list(self.devices.filter(manufacturer="juniper", tenant=["noc"], status=["active", "staged"]))
+
     ##########################
     # Hosts == VMs + Devices #
     ##########################
