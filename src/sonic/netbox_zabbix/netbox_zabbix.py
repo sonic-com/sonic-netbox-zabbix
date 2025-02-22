@@ -809,7 +809,9 @@ class SonicNetboxZabbix:
             else:
                 log.debug(f"checking juniper {nbjuniper}")
 
-            if any(tag["slug"] == "noc-unmanaged" for tag in nbjuniper.tags):
+            if "zabbix_host_id" in nbjuniper.custom_fields and nbjuniper.custom_fields.zabbix_host_id > 0:
+                log.info("Skipping because already in zabbix")
+            elif any(tag["slug"] == "noc-unmanaged" for tag in nbjuniper.tags):
                 log.info("Skipping because of noc-unmanaged tag")
             else:
                 log.info("Creating zabbix host")
@@ -822,6 +824,7 @@ class SonicNetboxZabbix:
                     host=name,
                     monitored_by=2,  # proxy group
                     proxy_groupid=3,  # NetEng Proxies
+                    inventory_mode=1,  # Automatic
                     interfaces=[
                         {
                             "type": 2,
