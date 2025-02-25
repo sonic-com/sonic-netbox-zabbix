@@ -860,7 +860,7 @@ class SonicNetboxZabbix:
                         {"templateid": 13084},  # NOC Juniper MX by SNMP
                     ],
                 )
-                log.error("Aborting after creating 1 host")  # FIXME
+                log.info("Aborting creations after creating 1 juniper host")  # FIXME
                 return  # FIXME
 
     def run(self):
