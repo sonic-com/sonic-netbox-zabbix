@@ -816,10 +816,14 @@ class SonicNetboxZabbix:
             else:
                 log.info("Creating zabbix host")
                 name = nbjuniper.display
-                ipslash = nbjuniper.primary_ip.address
-                ip = ipslash.split("/")[0]
-                snmp_comm = f"net/noc/{name}/snmp/read:community"
-
+                if nbjuniper.primary_ip and nbjuniper.primary_ip.address:
+                    ipslash = nbjuniper.primary_ip.address
+                    ip = ipslash.split("/")[0]
+                    snmp_comm = f"net/noc/{name}/snmp/read:community"
+                else:
+                    log.warn(f"No primary IP address on {name}")
+                    continue
+                    
                 self.zabbix.api.host.create(
                     host=name,
                     monitored_by=2,  # proxy group
