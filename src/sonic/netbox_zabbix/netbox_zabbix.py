@@ -132,6 +132,12 @@ class SonicNetboxZabbix:
         )
 
         argparser.add(
+            "--skip-creates",
+            action="store_true",
+            help="Don't create Zabbix hosts based on netbox data",
+        )
+
+        argparser.add(
             "--skip-ipmi", action="store_true", help="Don't add IPMI interfaces to Physical Devices that have them"
         )
 
@@ -763,9 +769,112 @@ class SonicNetboxZabbix:
                 else:
                     log.info(f"No Macros updates for {name}")
 
+    def create_hosts_in_zabbix(self):
+        self.create_noc_junipers()
+
+    def create_noc_junipers(self):
+        """
+        Import all devices in NetBox matching
+            - Tenant = noc (this will change to include noc_tech)
+            - Status in (active, staged)
+            - Tags do not include "noc-unmanaged"
+            - Manufacturer = Juniper (this will change to include additional manufacturers)
+
+        Each device should be added with a SNMP interface that has
+            - SNMP community taken from Vault net/noc/<hostname>/snmp/read[community]
+            - Pointed at the NetBox primary_ip
+            - Uses the noc proxy set
+            - Be associated with the "NOC Juniper MX by SNMP" template
+
+        Any additional NetBox information/status sync will be done by the existing
+        Zabbix/NetBox sync scripts in place.
+        Changes to those should be minimal and potentially only include special handling
+        of the "noc-unmanaged" tag, and updating tenant=soc to tenant=[noc,soc] in enable logic
+        """
+
+        log.debug("Getting list of junipers from Netbox")
+
+        # Gets active/staged noc junipers
+        nbjunipers = self.netbox.get_devices_juniper_noc()
+
+        if config.verbose >= 3:
+            log.debug(f"netbox_juniper_list: {pformat(nbjunipers)}")
+        else:
+            log.debug(f"netbox_juniper_list[0]: {pformat(nbjunipers[0])}")
+
+        # Check tenant, status, tag, etc here.
+        for nbjuniper in nbjunipers:
+            if config.verbose >= 4:
+                log.debug(f"checking juniper: {pformat(dict(nbjuniper))}")
+            else:
+                log.debug(f"checking juniper {nbjuniper}")
+
+            if (
+                "zabbix_host_id" in nbjuniper.custom_fields
+                and nbjuniper.custom_fields["zabbix_host_id"]
+                and nbjuniper.custom_fields["zabbix_host_id"] > 0
+            ):
+                log.info("Skipping because already in zabbix")
+            elif any(tag["slug"] == "noc-unmanaged" for tag in nbjuniper.tags):
+                log.info("Skipping because of noc-unmanaged tag")
+            else:
+                log.info("Creating zabbix host")
+                name = nbjuniper.display
+                if nbjuniper.primary_ip and nbjuniper.primary_ip.address:
+                    ipslash = nbjuniper.primary_ip.address
+                    ip = ipslash.split("/")[0]
+                    snmp_comm = f"net/noc/{name}/snmp/read:community"
+                else:
+                    log.warn(f"No primary IP address on {name}")
+                    continue
+
+                self.zabbix.api.host.create(
+                    host=name,
+                    monitored_by=2,  # proxy group
+                    proxy_groupid=3,  # NetEng Proxies
+                    inventory_mode=1,  # Automatic
+                    interfaces=[
+                        {
+                            "type": 2,
+                            "main": 1,
+                            "useip": 1,
+                            "ip": ip,
+                            "dns": name,
+                            "port": 161,
+                            "details": {"version": 2, "bulk": 1, "community": "{$SNMP_COMMUNITY}"},
+                        }
+                    ],
+                    groups=[
+                        {"groupid": 237},  # ALL
+                        {"groupid": 376},  # Network
+                        {"groupid": 370},  # Physical Devices
+                        {"groupid": 23},  # Sonic/NOC
+                        {"groupid": 374},  # Sonic/NOC/Physical Devices
+                    ],
+                    macros=[
+                        {
+                            "macro": "{$SNMP_COMMUNITY}",
+                            "value": snmp_comm,
+                            "type": 2,  # Vault secret
+                        }
+                    ],
+                    tags=[
+                        {
+                            "tag": "netbox-tenant",
+                            "value": "noc",
+                        }
+                    ],
+                    templates=[
+                        {"templateid": 13084},  # NOC Juniper MX by SNMP
+                    ],
+                )
+
     def run(self):
         """Run cli app with the given arguments."""
         log.debug("Starting run()")
+
+        if not config.skip_creates:
+            self.create_hosts_in_zabbix()
 
         log.debug("Getting list(s) of servers from Zabbix")
         zabbix_server_list = self.zabbix.get_hosts_all()
