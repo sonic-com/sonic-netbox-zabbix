@@ -827,7 +827,7 @@ class SonicNetboxZabbix:
                 else:
                     log.warn(f"No primary IP address on {name}")
                     continue
-                    
+
                 self.zabbix.api.host.create(
                     host=name,
                     monitored_by=2,  # proxy group
