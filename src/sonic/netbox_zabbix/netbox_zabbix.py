@@ -868,8 +868,6 @@ class SonicNetboxZabbix:
                         {"templateid": 13084},  # NOC Juniper MX by SNMP
                     ],
                 )
-                log.warning("Aborting creations after creating 1 juniper host")  # FIXME
-                return  # FIXME
 
     def run(self):
         """Run cli app with the given arguments."""
