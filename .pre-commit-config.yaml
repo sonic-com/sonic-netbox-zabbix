@@ -16,10 +16,11 @@ repos:
     - id: debug-statements # Check for debugger imports and py37+ breakpoint() calls in python source.
 
 # Linter for markdown
-#- repo: https://github.com/igorshubovych/markdownlint-cli
-#  rev: v0.44.0
-#  hooks:
-#    - id: markdownlint-fix
+# May require `sudo apt install npm` to work
+- repo: https://github.com/igorshubovych/markdownlint-cli
+  rev: v0.44.0
+  hooks:
+  - id: markdownlint-fix
 
 - repo: meta
   hooks:
