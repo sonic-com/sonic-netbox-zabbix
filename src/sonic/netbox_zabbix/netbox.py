@@ -45,7 +45,7 @@ class SonicNetboxZabbix_Netbox:
     def get_vms_active_soc_server(self) -> list:
         log.debug("Get active SOC server VMs")
         vms = self.get_vms_all()
-        return list(self.vms.filter(role="server", tenant="soc", status="active"))
+        return list(vms.filter(role="server", tenant="soc", status="active"))
 
     ####################
     # Physical Devices #

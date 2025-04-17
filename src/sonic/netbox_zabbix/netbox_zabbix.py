@@ -1,8 +1,7 @@
 import functools
+import json
 import logging
 import logging.handlers
-import sys
-import json
 from pprint import pformat
 
 import configargparse
@@ -12,7 +11,7 @@ from sonic.netbox_zabbix.zabbix import SonicNetboxZabbix_Zabbix
 
 try:
     from sonic.logger import setup_sonic_logger
-except ModuleNotFoundError as err:
+except ModuleNotFoundError:
     pass
 
 
@@ -54,6 +53,7 @@ class SonicNetboxZabbix:
                     log.addHandler(sysloghandler)
                 except Exception as e2:
                     print(f"Unable to make logging go: {str(e)}")
+                    print(f"More details? {str(e2)}")
                     raise
 
         if config.verbose >= 3:
@@ -577,7 +577,7 @@ class SonicNetboxZabbix:
                     log.debug(f"TRACE:{name}: hostgroups:filtered: {hostgroups}")
 
                 if any(grp["name"] == "ALL" for grp in hostgroups):
-                    log.debug(f"Hostgroup ALL already present")
+                    log.debug("Hostgroup ALL already present")
                 else:
                     log.info(f"Adding Hostgroup ALL to {name}")
                     new_hostgroup = self.zabbix.hostgroup_get_or_create("ALL")
@@ -700,7 +700,7 @@ class SonicNetboxZabbix:
                 if config.verbose >= 4:  # 4
                     log.debug(f"TRACE:{name}:Services")
                 nbsrv = netbox_servers[name]
-                zbsrv = zabbix_servers[name]
+                # zbsrv = zabbix_servers[name]
 
                 if config.verbose >= 4:  # 4
                     log.debug(pformat(dict(nbsrv)))
