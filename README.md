@@ -1,4 +1,4 @@
-# sonic-netbox-zabbix
+# sonic-netbox-zabbix #
 
 This currently has lots of stuff hard-coded for our specific environment.
 Might changes those to configurable things eventually, but for now it's more
@@ -8,7 +8,8 @@ something you can download and modify.
 
 - Pull netbox tags into zabbix host tags:
   - "Zabbix nopage" -> sonic-alert-routing:nopage
-  - Generically pull all tags in, using the slugs, like netbox tag: soc-restricted -> netbox-tag:soc-restricted
+  - Generically pull all tags in, using the slugs,
+     like netbox tag: soc-restricted -> netbox-tag:soc-restricted
 
 - Populate zabbix tags with info from netbox custom fields
   - update_group:daytime_auto -> sonic-netbox-update-group:daytime_auto
