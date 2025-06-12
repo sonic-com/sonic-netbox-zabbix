@@ -637,13 +637,16 @@ class SonicNetboxZabbix:
                 # Disable if status is various inactive types
                 elif nbsrv.status["value"] in [
                     "decommissioning",
-                    "planned",
                     "inventory",
                     "failed",
                     "offline",
                 ]:
                     log.debug(f"In-Active Host {name}/{nbsrv.status['value']}")
                     self.zabbix.host_disable(zbsrv)
+                elif nbsrv.status["value"] in [
+                    "planned",
+                ]:
+                    log.debug(f"Ignore {name}/{nbsrv.status['value']}")                
                 # Per-tenant logic
                 elif nbsrv.tenant and nbsrv.tenant["slug"]:
                     # Skip "SOC Special Use" for now
