@@ -23,7 +23,7 @@ class SonicNetboxZabbix_Zabbix:
         config = self.config
 
         # self.log.info("Logging into Zabbix")
-        api = ZabbixAPI(self.config.zabbixurl, skip_version_check=True)
+        api = ZabbixAPI(self.config.zabbixurl)
         api.login(token=self.config.zabbixtoken)
         self.api = api
 
