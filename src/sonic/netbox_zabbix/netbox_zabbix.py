@@ -286,11 +286,15 @@ class SonicNetboxZabbix:
 
                 # Actually save changes #
                 if macros:
-                    log.debug(f"Macros for {name}: {pformat(macros)}")
-                    self.zabbix.host_update_macros(
-                        hostid=zabbix_servers[name]["hostid"],
-                        macros=macros,
-                    )
+                    try:
+                        log.debug(f"Macros for {name}: {pformat(macros)}")
+                        self.zabbix.host_update_macros(
+                            hostid=zabbix_servers[name]["hostid"],
+                            macros=macros,
+                        )
+                    except:
+                        log.error(f"Unable to update macros for {name}")
+                        # raise
                 else:
                     log.warning(f"No Macros updates for {name}")
 
@@ -763,14 +767,15 @@ class SonicNetboxZabbix:
                     )
 
                 # Actually save changes #
-                if macros:
+                try:
                     log.debug(f"Macros for {name}: {pformat(macros)}")
                     self.zabbix.host_update_macros(
                         hostid=zabbix_servers[name]["hostid"],
                         macros=macros,
                     )
-                else:
-                    log.info(f"No Macros updates for {name}")
+                except:
+                    log.error(f"Unable to update macros for {name}")
+                    # raise
 
     def create_hosts_in_zabbix(self):
         self.create_noc_junipers()
