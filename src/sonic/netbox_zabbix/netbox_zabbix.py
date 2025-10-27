@@ -292,7 +292,7 @@ class SonicNetboxZabbix:
                             hostid=zabbix_servers[name]["hostid"],
                             macros=macros,
                         )
-                    except:
+                    except Exception:
                         log.error(f"Unable to update macros for {name}")
                         # raise
                 else:
@@ -545,6 +545,13 @@ class SonicNetboxZabbix:
                 log.warning(f"{name}: No such host in netbox data")
 
     @functools.cache
+    def hostname_to_tsname(self, hostname) -> str:
+        # inventory_hostname
+        #  | regex_replace('\.sonic\.net$', '')
+        #  | regex_replace('[^a-z0-9-]+', '-')
+        return hostname.lower().removesuffix(".sonic.net").replace(".", "-") + ".batfish-tailor.ts.net."
+
+    @functools.cache
     def site_to_path(self, site) -> str:
         # region / group / provider / tenant / site
 
@@ -650,7 +657,7 @@ class SonicNetboxZabbix:
                 elif nbsrv.status["value"] in [
                     "planned",
                 ]:
-                    log.debug(f"Ignore {name}/{nbsrv.status['value']}")                
+                    log.debug(f"Ignore {name}/{nbsrv.status['value']}")
                 # Per-tenant logic
                 elif nbsrv.tenant and nbsrv.tenant["slug"]:
                     # Skip "SOC Special Use" for now
@@ -773,7 +780,7 @@ class SonicNetboxZabbix:
                         hostid=zabbix_servers[name]["hostid"],
                         macros=macros,
                     )
-                except:
+                except Exception:
                     log.error(f"Unable to update macros for {name}")
                     # raise
 
@@ -917,10 +924,13 @@ class SonicNetboxZabbix:
             log.debug(f"DEBUG: netbox_server_list[0]: {pformat(dict(netbox_server_list[0]))}")
 
         netbox_server_dict = {}
+        netbox_server_tailnet_dict = {}
         for netbox_server in netbox_server_list:
             if netbox_server["name"]:
                 netbox_server_name = netbox_server["name"].lower()
+                tsname = self.hostname_to_tsname(netbox_server_name)
                 netbox_server_dict[netbox_server_name] = netbox_server
+                netbox_server_tailnet_dict[tsname] = netbox_server
 
         self.copy_zabbix_hostid_to_netbox(zabbix_server_dict, netbox_server_dict)
 
@@ -929,21 +939,25 @@ class SonicNetboxZabbix:
 
         if not config.skip_macros:
             self.copy_netbox_info_to_zabbix_macros(netbox_server_dict, zabbix_server_dict)
+            self.copy_netbox_info_to_zabbix_macros(netbox_server_tailnet_dict, zabbix_server_dict)
 
         if not config.skip_services:
             self.copy_netbox_services_to_zabbix(netbox_server_dict, zabbix_server_dict)
 
         if not config.skip_tags:
             self.copy_netbox_info_to_zabbix_tags(netbox_server_dict, zabbix_server_dict)
+            self.copy_netbox_info_to_zabbix_tags(netbox_server_tailnet_dict, zabbix_server_dict)
 
         if not config.skip_inventory:
             self.copy_netbox_info_to_zabbix_inventory(netbox_server_dict, zabbix_server_dict)
+            self.copy_netbox_info_to_zabbix_inventory(netbox_server_tailnet_dict, zabbix_server_dict)
 
         if not config.skip_hostgroups:
             self.copy_netbox_info_to_zabbix_hostgroups(zabbix_notdiscovered_dict, netbox_server_dict)
 
         if not config.skip_disables:
             self.disable_enable_zabbix_hosts_from_netbox_data(zabbix_server_dict, netbox_server_dict)
+            self.disable_enable_zabbix_hosts_from_netbox_data(zabbix_server_dict, netbox_server_tailnet_dict)
 
 
 def main():
