@@ -1,49 +1,50 @@
-[build-system]
-requires = ["poetry-core>=1.0.0", "poetry-dynamic-versioning>=1.0.0,<2.0.0"]
-build-backend = "poetry_dynamic_versioning.backend"
-
-[tool.poetry]
+[project]
 name = "sonic-netbox-zabbix"
 version = "1.0.0"
 description = "Sync Netbox devices and virtual-machines to Zabbix hosts"
-authors = ["Eric Eisenhart <eric.eisenhart@sonic.com>"]
-license = "GNU Affero General Public License v3.0"
+authors = [{ name = "Eric Eisenhart", email = "eric.eisenhart@sonic.com" }]
+requires-python = ">=3.11,<4"
 readme = "README.md"
-packages = [
-    { include = "sonic", from = "src" },
+license = "GNU Affero General Public License v3.0"
+dependencies = [
+    "ConfigArgParse>=1.7,<2",
+    "zabbix-utils>=2.0.0,<3",
+    "pynetbox>=7.3.3,<8",
+    "hvac>=2.2.0,<3",
+    "sonic-logger>=1.0.3,<2",
 ]
 
-[[tool.poetry.source]]
+[project.urls]
+Repository = "https://github.com/sonic-com/sonic-netbox-zabbix"
+
+[project.scripts]
+netbox_zabbix = "sonic.netbox_zabbix:main"
+
+[dependency-groups]
+dev = []
+
+[tool.uv]
+
+[[tool.uv.index]]
 name = "sonic"
 url = "https://repo.sonic.net/sonic_python_packages"
-priority = "supplemental"
 
-[[tool.poetry.source]]
+[[tool.uv.index]]
 name = "sonic_pypi"
 url = "https://repo.sonic.net/sonic_pypi"
-priority = "supplemental"
 
-[tool.poetry.dependencies]
-python = "^3.11"
-ConfigArgParse = "^1.7"
-zabbix-utils = "^2.0.0"
-pynetbox = "^7.3.3"
-hvac = {version = "^2.2.0", optional = true}
-sonic-logger = {version = "^1.0.3", source = "sonic", optional = true}
+[tool.uv.sources]
+sonic-logger = { index = "sonic" }
 
-[tool.poetry.dev-dependencies]
+[tool.hatch.build.targets.sdist]
+include = ["src/sonic"]
+
+[tool.hatch.build.targets.wheel]
+include = ["src/sonic"]
+
+[tool.hatch.build.targets.wheel.sources]
+"src/sonic" = "sonic"
 # development dependencies.
-
-[tool.poetry-dynamic-versioning]
-enable = true
-style = "pep440"
-pattern = "default-unprefixed"
-
-[tool.poetry.urls]
-"Repository" = "https://github.com/sonic-com/sonic-netbox-zabbix"
-
-[tool.poetry.scripts]
-netbox_zabbix = "sonic.netbox_zabbix:main"
 
 [tool.black]
 target-version = ["py311", "py312"]

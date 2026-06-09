@@ -3,16 +3,352 @@ import json
 import logging
 import logging.handlers
 from pprint import pformat
+import pynetbox
+from zabbix_utils import ZabbixAPI
 
 import configargparse
 
-from sonic.netbox_zabbix.netbox import SonicNetboxZabbix_Netbox
-from sonic.netbox_zabbix.zabbix import SonicNetboxZabbix_Zabbix
+class SonicNetboxZabbix_Zabbix:
+    """
+    Utils for Zabbix stuff
+    """
 
-try:
-    from sonic.logger import setup_sonic_logger
-except ModuleNotFoundError:
-    pass
+    log = False
+    config = False
+
+    def __init__(self, logger, configobj):
+        global log
+        global config
+
+        self.log = logger
+        self.config = configobj
+
+        log = self.log
+        config = self.config
+
+        # self.log.info("Logging into Zabbix")
+        api = ZabbixAPI(self.config.zabbixurl)
+        api.login(token=self.config.zabbixtoken)
+        self.api = api
+
+    def __del__(self):
+        self.api.logout()
+
+    @functools.cache
+    def get_hosts_all(self):
+        return self.api.host.get(
+            selectTags=["tag", "value"],
+            selectInheritedTags=["tag", "value"],
+            selectHostGroups=["groupid", "name"],
+            selectMacros=["macro", "value", "description", "type"],
+            selectParentTemplates=["templateid", "name"],
+        )
+
+    @functools.cache
+    def get_hosts_discovered(self):
+        return self.api.host.get(
+            filter={"flags": 4},
+            selectTags=["tag", "value"],
+            selectInheritedTags=["tag", "value"],
+            selectHostGroups=["groupid", "name"],
+            selectMacros=["macro", "value", "description", "type"],
+            selectParentTemplates=["templateid", "name"],
+        )
+
+    @functools.cache
+    def get_hosts_notdiscovered(self):
+        return self.api.host.get(
+            filter={"flags": 0},
+            selectTags=["tag", "value"],
+            selectInheritedTags=["tag", "value"],
+            selectHostGroups=["groupid", "name"],
+            selectMacros=["macro", "value", "description", "type"],
+            selectParentTemplates=["templateid", "name"],
+            selectInterfaces="extend",
+        )
+
+    @functools.cache
+    def hostgroup_get_or_create(self, name):
+        groups = self.api.hostgroup.get(
+            filter={"name": name},
+        )
+        log.debug(f"{name}:groups:{groups}")
+        if len(groups) >= 1:
+            log.debug(f"{name}:groups[0]:{groups[0]}")
+            groupid = groups[0]["groupid"]
+        else:
+            log.debug(f"create group:{name}")
+            groupid = self.api.hostgroup.create(name=name)["groupids"][0]
+
+        log.debug(f"returning groupid:{groupid}")
+        return {"groupid": int(groupid)}
+
+    def host_update_tags(self, hostid, tags):
+        response = self.api.host.update(hostid=hostid, tags=tags)
+        log.debug(f"{hostid}:response: {pformat(response)}")
+        return response
+
+    def host_update_inventory(self, hostid, inventory):
+        response = self.api.host.update(hostid=hostid, inventory=inventory)
+        log.debug(f"{hostid}:response: {pformat(response)}")
+        return response
+
+    def host_update_macros(self, hostid, macros):
+        response = self.api.host.update(hostid=hostid, macros=macros)
+        log.debug(f"{hostid}:response: {pformat(response)}")
+        return response
+
+    def host_update_hostgroups(self, hostid, hostgroups):
+        if config.verbose >= 4:
+            log.debug(f"TRACE:{hostid}:hostgroups:{hostgroups}")
+        response = self.api.host.update(hostid=hostid, groups=hostgroups)
+        log.debug(f"{hostid}:response:{pformat(response)}")
+        return response
+
+    def host_disable(self, host):
+        hostid = host["hostid"]
+        if config.verbose >= 4:
+            log.debug(f"TRACE:{hostid}")
+        # log.debug(f"TRACE:host:pformat:{pformat(host)}")
+        if int(host["status"]) != 1:
+            log.warning(f"Disabling host {host['name']}/{hostid}")
+            response = self.api.host.update(hostid=hostid, status=1)
+            log.debug(f"{hostid}:response:{pformat(response)}")
+            return response
+        else:
+            log.info(f"Already disabled host {host['name']}/{hostid}")
+            return False
+
+    def host_enable(self, host):
+        hostid = host["hostid"]
+        if config.verbose >= 4:
+            log.debug(f"TRACE:{hostid}")
+        if config.verbose >= 5:
+            log.debug(f"TRACE:host:pformat:{pformat(host)}")
+        if int(host["status"]) != 0:
+            log.warning(f"Enabling host {host['name']}/{hostid}")
+            response = self.api.host.update(hostid=hostid, status=0)
+            log.debug(f"{hostid}:response:{pformat(response)}")
+            return response
+        else:
+            log.debug(f"Already enabled host {host['name']}/{hostid}")
+            return False
+
+    def set_ipmi_interface(self, host, ipmi_ip):
+        hostid = host["hostid"]
+        if config.verbose >= 4:
+            log.debug(f"TRACE:{hostid}")
+        if config.verbose >= 5:
+            log.debug(f"TRACE:host:pformat:{pformat(host)}")
+
+class SonicNetboxZabbix_Netbox:
+    """
+    Utils for Netbox stuff
+    """
+
+    log = False
+    config = False
+
+    def __init__(self, logger, configobj):
+        global log
+        global config
+
+        self.log = logger
+        self.config = configobj
+
+        log = self.log
+        config = self.config
+
+        log.debug("Logging into Netbox")
+        self.api = pynetbox.api(
+            config.netboxurl,
+            token=config.netboxtoken,
+            threading=True,
+        )
+
+        self.vms = self.api.virtualization.virtual_machines
+        self.devices = self.api.dcim.devices
+
+    ####################
+    # Virtual Machines #
+    ####################
+    @functools.cache
+    def get_vms_all(self) -> list:
+        """Get all VMs from Netbox"""
+        log.debug("Get all VMs from Netbox")
+        return list(self.vms.all())
+
+    @functools.cache
+    def get_vms_active_soc_server(self) -> list:
+        log.debug("Get active SOC server VMs")
+        vms = self.get_vms_all()
+        return list(vms.filter(role="server", tenant="soc", status="active"))
+
+    ####################
+    # Physical Devices #
+    ####################
+    @functools.cache
+    def get_devices_all(self):
+        log.debug("Get all devices")
+        return self.devices.all()
+
+    @functools.cache
+    def get_devices_active_soc_server(self) -> list:
+        log.debug("Get Active SOC server devices")
+        return list(self.devices.filter(role="server", tenant="soc", status="active"))
+
+    @functools.cache
+    def get_devices_juniper_noc(self) -> list:
+        log.debug("Get Active/Staged NOC Junipers")
+        # https://netbox.noc.sonic.net/dcim/devices/?status=active&status=staged&manufacturer_id=5&tenant_id=5
+        return list(self.devices.filter(manufacturer="juniper", tenant=["noc"], status=["active", "staged"]))
+
+    ##########################
+    # Hosts == VMs + Devices #
+    ##########################
+    @functools.cache
+    def get_hosts_all(self) -> list:
+        log.debug("Get all hosts")
+        vms = self.get_vms_all()
+        devices = self.get_devices_all()
+        return list(vms) + list(devices)
+
+    @functools.cache
+    def get_hosts_active_soc_server(self) -> list:
+        log.debug("Get all active soc server hosts")
+        vms = self.get_vms_active_soc_server()
+        devices = self.get_devices_active_soc_server()
+        return list(vms) + list(devices)
+
+    #####################
+    # Organization Info #
+    #####################
+
+    @functools.cache
+    def get_regions_all(self):
+        log.debug("Get all regions")
+        return self.api.dcim.regions.all()
+
+    @functools.cache
+    def get_sites_all(self):
+        log.debug("Get all sites")
+        return self.api.dcim.sites.all()
+
+    @functools.cache
+    def get_sites_smart_filter(self) -> list:
+        log.debug("Get sites that have at least 1 device")
+        sites = []
+        for site in self.get_sites_all():
+            if site.device_count >= 1:
+                sites.append(site)
+        return sites
+
+    @functools.cache
+    def get_cluster_by_id(self, id):
+        """This basically just exists for caching"""
+        log.debug(id)
+        return self.api.virtualization.clusters.get(id)
+
+    ##########################
+    # Individual Server Info #
+    ##########################
+
+    @functools.cache
+    def get_server_services_all(self, server):
+        log.debug(server)
+        server_id = server.id
+        if self.is_virtual(server):
+            services = self.api.ipam.services.filter(virtual_machine_id=server_id)
+        else:
+            services = self.api.ipam.services.filter(device_id=server_id)
+
+        return list(services)
+
+    @functools.cache
+    def get_server_services_offnet(self, server):
+        log.debug(server)
+        server_id = server.id
+        if self.is_virtual(server):
+            services = self.api.ipam.services.filter(tag="offnet-ports-open", virtual_machine_id=server_id)
+        else:
+            services = self.api.ipam.services.filter(tag="offnet-ports-open", device_id=server_id)
+
+        return list(services)
+
+    @functools.cache
+    def is_physical(self, server) -> bool:
+        log.debug(server)
+        if "device_type" in dict(server):
+            return True
+        else:
+            return False
+
+    @functools.cache
+    def is_virtual(self, server) -> bool:
+        log.debug(server)
+        if "memory" in dict(server):
+            return True
+        else:
+            return False
+
+    @functools.cache
+    def virt_type(self, server) -> bool:
+        log.debug(server)
+        if config.verbose >= 4:
+            log.debug(pformat(dict(server)))
+        if server.cluster:
+            log.debug("Has a cluster")
+            log.debug(server.cluster)
+            if config.verbose >= 4:
+                log.debug(pformat(dict(server.cluster)))
+            cluster = self.get_cluster_by_id(server.cluster["id"])
+            log.debug(f"resulting cluster: {pformat(cluster)}")
+            # server.cluster.full_details()
+            if not cluster or not cluster.type:
+                log.debug("No cluster or cluster.type")
+                return False
+
+            log.debug(pformat(dict(cluster)))
+
+            type = cluster.type["display"]
+            if type and type.startswith("VMware"):
+                type = "VMware"
+            return type
+        else:
+            log.debug("No server.cluster")
+            return False
+
+    @functools.cache
+    def get_ipmi_ip(self, server) -> str:
+        ipmask = False
+
+        if self.is_virtual(server):
+            return False
+
+        log.debug(f"Server: {server}")
+        if config.verbose >= 4:
+            log.debug(pformat(dict(server)))
+        if server.oob_ip and server.oob_ip["address"]:
+            log.debug("Has oob_ip")
+            ipmask = server.oob_ip["address"]
+        else:
+            log.debug("No oob_ip")
+            ipmi_interface = self.api.dcim.interfaces.get(name="IPMI", device_id=server.id)
+            if ipmi_interface:
+                log.debug(f"IPMI interface: {ipmi_interface}")
+                ipmi_ip = self.api.ipam.ip_addresses.get(interface_id=ipmi_interface.id)
+                if ipmi_ip:
+                    ipmask = str(ipmi_ip)
+                log.debug(f"IP from IPMI interface: {ipmask}")
+            else:
+                log.debug("No IPMI interface")
+
+        if ipmask:
+            ip = ipmask.split("/")[0]
+            log.info(f"IPMI IP for {server} is {ip}")
+            return ip
+        else:
+            return False
 
 
 class SonicNetboxZabbix:
