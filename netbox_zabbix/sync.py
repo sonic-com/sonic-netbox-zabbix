@@ -830,14 +830,18 @@ class SonicNetboxZabbix:
         else:
             self.log.debug(f"DEBUG: netbox_server_list[0]: {pformat(dict(netbox_server_list[0]))}")
 
+        # Key each Netbox host under both its primary name and its tailnet
+        # (batfish-tailor.ts.net.) name so a single pass matches Zabbix hosts
+        # named either way. The two key namespaces never collide, so this
+        # replaces the old run-everything-twice approach -- which logged a
+        # bogus "No such host" for every host on whichever pass didn't match
+        # and doubled the Zabbix writes.
         netbox_server_dict = {}
-        netbox_server_tailnet_dict = {}
         for netbox_server in netbox_server_list:
             if netbox_server["name"]:
                 netbox_server_name = netbox_server["name"].lower()
-                tsname = self.hostname_to_tsname(netbox_server_name)
                 netbox_server_dict[netbox_server_name] = netbox_server
-                netbox_server_tailnet_dict[tsname] = netbox_server
+                netbox_server_dict[self.hostname_to_tsname(netbox_server_name)] = netbox_server
 
         self.copy_zabbix_hostid_to_netbox(zabbix_server_dict, netbox_server_dict)
 
@@ -846,22 +850,18 @@ class SonicNetboxZabbix:
 
         if not self.config.skip_macros:
             self.copy_netbox_info_to_zabbix_macros(netbox_server_dict, zabbix_server_dict)
-            self.copy_netbox_info_to_zabbix_macros(netbox_server_tailnet_dict, zabbix_server_dict)
 
         if not self.config.skip_services:
             self.copy_netbox_services_to_zabbix(netbox_server_dict, zabbix_server_dict)
 
         if not self.config.skip_tags:
             self.copy_netbox_info_to_zabbix_tags(netbox_server_dict, zabbix_server_dict)
-            self.copy_netbox_info_to_zabbix_tags(netbox_server_tailnet_dict, zabbix_server_dict)
 
         if not self.config.skip_inventory:
             self.copy_netbox_info_to_zabbix_inventory(netbox_server_dict, zabbix_server_dict)
-            self.copy_netbox_info_to_zabbix_inventory(netbox_server_tailnet_dict, zabbix_server_dict)
 
         if not self.config.skip_hostgroups:
             self.copy_netbox_info_to_zabbix_hostgroups(zabbix_notdiscovered_dict, netbox_server_dict)
 
         if not self.config.skip_disables:
             self.disable_enable_zabbix_hosts_from_netbox_data(zabbix_server_dict, netbox_server_dict)
-            self.disable_enable_zabbix_hosts_from_netbox_data(zabbix_server_dict, netbox_server_tailnet_dict)
