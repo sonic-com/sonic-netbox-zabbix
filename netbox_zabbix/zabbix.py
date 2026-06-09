@@ -1,0 +1,131 @@
+"""Thin wrapper around the Zabbix API for the operations this tool needs."""
+
+import functools
+from pprint import pformat
+
+from zabbix_utils import ZabbixAPI
+
+
+class ZabbixClient:
+    """Utils for Zabbix stuff."""
+
+    def __init__(self, logger, configobj):
+        self.log = logger
+        self.config = configobj
+
+        api = ZabbixAPI(self.config.zabbixurl)
+        api.login(token=self.config.zabbixtoken)
+        self.api = api
+
+    def __del__(self):
+        try:
+            self.api.logout()
+        except Exception:  # pragma: no cover - best-effort cleanup on teardown
+            pass
+
+    @functools.cache
+    def get_hosts_all(self):
+        return self.api.host.get(
+            selectTags=["tag", "value"],
+            selectInheritedTags=["tag", "value"],
+            selectHostGroups=["groupid", "name"],
+            selectMacros=["macro", "value", "description", "type"],
+            selectParentTemplates=["templateid", "name"],
+        )
+
+    @functools.cache
+    def get_hosts_discovered(self):
+        return self.api.host.get(
+            filter={"flags": 4},
+            selectTags=["tag", "value"],
+            selectInheritedTags=["tag", "value"],
+            selectHostGroups=["groupid", "name"],
+            selectMacros=["macro", "value", "description", "type"],
+            selectParentTemplates=["templateid", "name"],
+        )
+
+    @functools.cache
+    def get_hosts_notdiscovered(self):
+        return self.api.host.get(
+            filter={"flags": 0},
+            selectTags=["tag", "value"],
+            selectInheritedTags=["tag", "value"],
+            selectHostGroups=["groupid", "name"],
+            selectMacros=["macro", "value", "description", "type"],
+            selectParentTemplates=["templateid", "name"],
+            selectInterfaces="extend",
+        )
+
+    @functools.cache
+    def hostgroup_get_or_create(self, name):
+        groups = self.api.hostgroup.get(
+            filter={"name": name},
+        )
+        self.log.debug(f"{name}:groups:{groups}")
+        if len(groups) >= 1:
+            self.log.debug(f"{name}:groups[0]:{groups[0]}")
+            groupid = groups[0]["groupid"]
+        else:
+            self.log.debug(f"create group:{name}")
+            groupid = self.api.hostgroup.create(name=name)["groupids"][0]
+
+        self.log.debug(f"returning groupid:{groupid}")
+        return {"groupid": int(groupid)}
+
+    def host_update_tags(self, hostid, tags):
+        response = self.api.host.update(hostid=hostid, tags=tags)
+        self.log.debug(f"{hostid}:response: {pformat(response)}")
+        return response
+
+    def host_update_inventory(self, hostid, inventory):
+        response = self.api.host.update(hostid=hostid, inventory=inventory)
+        self.log.debug(f"{hostid}:response: {pformat(response)}")
+        return response
+
+    def host_update_macros(self, hostid, macros):
+        response = self.api.host.update(hostid=hostid, macros=macros)
+        self.log.debug(f"{hostid}:response: {pformat(response)}")
+        return response
+
+    def host_update_hostgroups(self, hostid, hostgroups):
+        if self.config.verbose >= 4:
+            self.log.debug(f"TRACE:{hostid}:hostgroups:{hostgroups}")
+        response = self.api.host.update(hostid=hostid, groups=hostgroups)
+        self.log.debug(f"{hostid}:response:{pformat(response)}")
+        return response
+
+    def host_disable(self, host):
+        hostid = host["hostid"]
+        if self.config.verbose >= 4:
+            self.log.debug(f"TRACE:{hostid}")
+        # self.log.debug(f"TRACE:host:pformat:{pformat(host)}")
+        if int(host["status"]) != 1:
+            self.log.warning(f"Disabling host {host['name']}/{hostid}")
+            response = self.api.host.update(hostid=hostid, status=1)
+            self.log.debug(f"{hostid}:response:{pformat(response)}")
+            return response
+        else:
+            self.log.info(f"Already disabled host {host['name']}/{hostid}")
+            return False
+
+    def host_enable(self, host):
+        hostid = host["hostid"]
+        if self.config.verbose >= 4:
+            self.log.debug(f"TRACE:{hostid}")
+        if self.config.verbose >= 5:
+            self.log.debug(f"TRACE:host:pformat:{pformat(host)}")
+        if int(host["status"]) != 0:
+            self.log.warning(f"Enabling host {host['name']}/{hostid}")
+            response = self.api.host.update(hostid=hostid, status=0)
+            self.log.debug(f"{hostid}:response:{pformat(response)}")
+            return response
+        else:
+            self.log.debug(f"Already enabled host {host['name']}/{hostid}")
+            return False
+
+    def set_ipmi_interface(self, host, ipmi_ip):
+        hostid = host["hostid"]
+        if self.config.verbose >= 4:
+            self.log.debug(f"TRACE:{hostid}")
+        if self.config.verbose >= 5:
+            self.log.debug(f"TRACE:host:pformat:{pformat(host)}")

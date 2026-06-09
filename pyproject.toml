@@ -5,50 +5,25 @@ description = "Sync Netbox devices and virtual-machines to Zabbix hosts"
 authors = [{ name = "Eric Eisenhart", email = "eric.eisenhart@sonic.com" }]
 requires-python = ">=3.11,<4"
 readme = "README.md"
-license = "GNU Affero General Public License v3.0"
+license = "AGPL-3.0-or-later"
 dependencies = [
     "ConfigArgParse>=1.7,<2",
     "zabbix-utils>=2.0.0,<3",
     "pynetbox>=7.3.3,<8",
-    "hvac>=2.2.0,<3",
-    "sonic-logger>=1.0.3,<2",
 ]
 
 [project.urls]
 Repository = "https://github.com/sonic-com/sonic-netbox-zabbix"
 
 [project.scripts]
-netbox_zabbix = "sonic.netbox_zabbix:main"
+netbox_zabbix = "netbox_zabbix.cli:main"
 
-[dependency-groups]
-dev = []
-
-[tool.uv]
-
-[[tool.uv.index]]
-name = "sonic"
-url = "https://repo.sonic.net/sonic_python_packages"
-
-[[tool.uv.index]]
-name = "sonic_pypi"
-url = "https://repo.sonic.net/sonic_pypi"
-
-[tool.uv.sources]
-sonic-logger = { index = "sonic" }
-
-[tool.hatch.build.targets.sdist]
-include = ["src/sonic"]
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-include = ["src/sonic"]
+packages = ["netbox_zabbix"]
 
-[tool.hatch.build.targets.wheel.sources]
-"src/sonic" = "sonic"
-# development dependencies.
-
-[tool.black]
-target-version = ["py311", "py312"]
+[tool.ruff]
 line-length = 120
-
-[tool.yapf]
-column_limit = 120

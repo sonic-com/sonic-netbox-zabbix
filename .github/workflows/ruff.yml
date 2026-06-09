@@ -1,0 +1,23 @@
+name: Ruff
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  ruff:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # Linter (line-length and other settings come from pyproject.toml)
+      - name: Ruff check
+        uses: astral-sh/ruff-action@v3
+        with:
+          version: "0.15.16"
+          args: "check --output-format=github"
+      # Formatter (fails if anything is not already formatted)
+      - name: Ruff format
+        uses: astral-sh/ruff-action@v3
+        with:
+          version: "0.15.16"
+          args: "format --check --diff"
