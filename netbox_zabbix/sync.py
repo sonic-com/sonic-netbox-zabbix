@@ -3,6 +3,7 @@
 import functools
 import json
 from pprint import pformat
+from urllib.parse import urlparse
 
 from netbox_zabbix.cli import parse_args, setup_logging
 from netbox_zabbix.netbox import NetboxClient
@@ -672,6 +673,16 @@ class SonicNetboxZabbix:
                     self.log.error(f"Unable to update macros for {name}")
                     # raise
 
+    def _zabbix_is_noc(self) -> bool:
+        """Whether the configured Zabbix instance is the NOC one.
+
+        NOC Juniper devices must only be created on the NOC Zabbix server,
+        identified by a hostname of ``zabbix.noc.sonic.net`` or anything
+        starting with ``zabbix-noc.`` (e.g. staging/replacement instances).
+        """
+        host = (urlparse(self.config.zabbixurl).hostname or "").lower()
+        return host == "zabbix.noc.sonic.net" or host.startswith("zabbix-noc.")
+
     def create_hosts_in_zabbix(self):
         self.create_noc_junipers()
 
@@ -694,6 +705,10 @@ class SonicNetboxZabbix:
         Changes to those should be minimal and potentially only include special handling
         of the "noc-unmanaged" tag, and updating tenant=soc to tenant=[noc,soc] in enable logic
         """
+
+        if not self._zabbix_is_noc():
+            self.log.info(f"Skipping NOC Juniper creation: {self.config.zabbixurl} is not the NOC Zabbix instance")
+            return
 
         self.log.debug("Getting list of junipers from Netbox")
 
