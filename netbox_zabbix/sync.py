@@ -39,6 +39,8 @@ class SonicNetboxZabbix:
 
     def copy_zabbix_hostid_to_netbox(self, zabbix_servers, netbox_servers):
         for name in zabbix_servers:
+            if "batfish-tailor.ts.net" in name:
+                continue
             if name in netbox_servers and netbox_servers[name]:
                 netbox_servers[name]["custom_fields"]["zabbix_host_id"] = int(zabbix_servers[name]["hostid"])
                 netbox_servers[name].save()
