@@ -124,6 +124,15 @@ class SonicNetboxZabbix:
                         }
                     )
 
+                if srv.cluster and srv.cluster["name"]:
+                    macros.append(
+                        {
+                            "macro": "{$NETBOX.CLUSTER.NAME}",
+                            "value": srv.cluster["name"],
+                            "description": "Netbox cluster this host belongs to",
+                        }
+                    )
+
                 macros.append(
                     {
                         "macro": "{$NETBOX.DATE.CREATED}",
@@ -212,6 +221,9 @@ class SonicNetboxZabbix:
                             "value": self.netbox.virt_type(srv),
                         }
                     )
+
+                if srv.cluster and srv.cluster["name"]:
+                    tags.append({"tag": "netbox-cluster-name", "value": srv.cluster["name"]})
 
                 if self.netbox.is_physical(srv) and srv.device_type and srv.device_type["slug"]:
                     tags.append({"tag": "netbox-device-type", "value": srv.device_type["slug"]})
@@ -368,6 +380,7 @@ class SonicNetboxZabbix:
                 if self.netbox.is_virtual(srv):
                     inventory["hardware"] = "Virtual"
                     if self.netbox.virt_type(srv):
+                        inventory["hardware"] = f"Virtual ({self.netbox.virt_type(srv)})"
                         inventory["vendor"] = self.netbox.virt_type(srv)
 
                 if self.netbox.is_physical(srv):
