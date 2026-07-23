@@ -63,6 +63,22 @@ class SonicNetboxZabbix:
                     macros = []
                 self.log.debug(f"macros(post): {pformat(macros)}")
 
+                if srv.url:
+                    macros.append(
+                        {
+                            "macro": "{$NETBOX.URL}",
+                            "value": srv.url.replace("/api/", "/"),
+                            "description": "Netbox page for this host",
+                        }
+                    )
+                    macros.append(
+                        {
+                            "macro": "{$NETBOX.URL.API}",
+                            "value": srv.url,
+                            "description": "Netbox API endpoint for this host",
+                        }
+                    )
+
                 if srv.status and srv.status["value"] and srv.status["label"]:
                     macros.append(
                         {
