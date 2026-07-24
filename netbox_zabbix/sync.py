@@ -201,6 +201,10 @@ class SonicNetboxZabbix:
                             hostid=zabbix_servers[name]["hostid"],
                             macros=macros,
                         )
+                        # Keep the shared snapshot current so later passes
+                        # (e.g. services) don't clobber these macros with the
+                        # stale start-of-run copy.
+                        zabbix_servers[name]["macros"] = macros
                     except Exception:
                         self.log.error(f"Unable to update macros for {name}")
                         # raise
@@ -700,6 +704,9 @@ class SonicNetboxZabbix:
                         hostid=zabbix_servers[name]["hostid"],
                         macros=macros,
                     )
+                    # Keep the shared snapshot current so later passes don't
+                    # clobber these macros with the stale start-of-run copy.
+                    zabbix_servers[name]["macros"] = macros
                 except Exception:
                     self.log.error(f"Unable to update macros for {name}")
                     # raise
