@@ -29,7 +29,7 @@ class ZabbixClient:
             selectTags=["tag", "value"],
             selectInheritedTags=["tag", "value"],
             selectHostGroups=["groupid", "name"],
-            selectMacros=["macro", "value", "description", "type"],
+            selectMacros=["hostmacroid", "macro", "value", "description", "type"],
             selectParentTemplates=["templateid", "name"],
         )
 
@@ -40,7 +40,7 @@ class ZabbixClient:
             selectTags=["tag", "value"],
             selectInheritedTags=["tag", "value"],
             selectHostGroups=["groupid", "name"],
-            selectMacros=["macro", "value", "description", "type"],
+            selectMacros=["hostmacroid", "macro", "value", "description", "type"],
             selectParentTemplates=["templateid", "name"],
         )
 
@@ -51,7 +51,7 @@ class ZabbixClient:
             selectTags=["tag", "value"],
             selectInheritedTags=["tag", "value"],
             selectHostGroups=["groupid", "name"],
-            selectMacros=["macro", "value", "description", "type"],
+            selectMacros=["hostmacroid", "macro", "value", "description", "type"],
             selectParentTemplates=["templateid", "name"],
             selectInterfaces="extend",
         )
@@ -82,10 +82,47 @@ class ZabbixClient:
         self.log.debug(f"{hostid}:response: {pformat(response)}")
         return response
 
-    def host_update_macros(self, hostid, macros):
-        response = self.api.host.update(hostid=hostid, macros=macros)
-        self.log.debug(f"{hostid}:response: {pformat(response)}")
-        return response
+    def host_sync_macros(self, hostid, existing_macros, desired_macros, managed_prefixes):
+        """Selectively sync the managed subset of a host's macros.
+
+        Only macros whose name starts with one of ``managed_prefixes`` are
+        created/updated/deleted to match ``desired_macros``; all other macros
+        are never sent to the API. Unchanged macros generate no API call, so
+        hosts don't show config churn on every run, and secret macros (whose
+        values the API never returns) can't be wiped by a full rewrite.
+
+        Returns the resulting full macro list so callers can refresh their
+        in-memory snapshot of the host.
+        """
+        prefixes = tuple(managed_prefixes)
+        result = [item for item in existing_macros if not item["macro"].startswith(prefixes)]
+        current = {item["macro"]: item for item in existing_macros if item["macro"].startswith(prefixes)}
+
+        for desired in desired_macros:
+            name = desired["macro"]
+            have = current.pop(name, None)
+            if have is None:
+                self.log.info(f"{hostid}: creating macro {name}")
+                response = self.api.usermacro.create(hostid=hostid, **desired)
+                self.log.debug(f"{hostid}:response: {pformat(response)}")
+            elif (
+                have.get("value") != desired.get("value")
+                or (have.get("description") or "") != (desired.get("description") or "")
+                or str(have.get("type") or 0) != str(desired.get("type") or 0)
+            ):
+                self.log.info(f"{hostid}: updating macro {name}")
+                response = self.api.usermacro.update(hostmacroid=have["hostmacroid"], **desired)
+                self.log.debug(f"{hostid}:response: {pformat(response)}")
+            else:
+                self.log.debug(f"{hostid}: macro {name} unchanged")
+            result.append(desired)
+
+        if current:
+            self.log.info(f"{hostid}: deleting stale macros {sorted(current)}")
+            response = self.api.usermacro.delete([item["hostmacroid"] for item in current.values()])
+            self.log.debug(f"{hostid}:response: {pformat(response)}")
+
+        return result
 
     def host_update_hostgroups(self, hostid, hostgroups):
         if self.config.verbose >= 4:

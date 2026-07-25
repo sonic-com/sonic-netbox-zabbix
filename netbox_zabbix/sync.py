@@ -54,14 +54,10 @@ class SonicNetboxZabbix:
                     self.log.debug(f"TRACE: macros for {name}")
                 srv = netbox_servers[name]
 
-                # Pull current macros in, minus the $NETBOX. macros
-                if "macros" in zabbix_servers[name]:
-                    macros = zabbix_servers[name]["macros"]
-                    self.log.debug(f"macros(pre): {pformat(macros)}")
-                    macros = [item for item in macros if not item["macro"].startswith("{$NETBOX.")]
-                else:
-                    macros = []
-                self.log.debug(f"macros(post): {pformat(macros)}")
+                # Build the desired {$NETBOX.*} macro set; host_sync_macros
+                # diffs it against what's on the host and only touches
+                # macros in that namespace.
+                macros = []
 
                 if srv.url:
                     macros.append(
@@ -194,22 +190,17 @@ class SonicNetboxZabbix:
                 macros.append({"macro": "{$NETBOX.TAGS}", "value": json.dumps(tags)})
 
                 # Actually save changes #
-                if macros:
-                    try:
-                        self.log.debug(f"Macros for {name}: {pformat(macros)}")
-                        self.zabbix.host_update_macros(
-                            hostid=zabbix_servers[name]["hostid"],
-                            macros=macros,
-                        )
-                        # Keep the shared snapshot current so later passes
-                        # (e.g. services) don't clobber these macros with the
-                        # stale start-of-run copy.
-                        zabbix_servers[name]["macros"] = macros
-                    except Exception:
-                        self.log.error(f"Unable to update macros for {name}")
-                        # raise
-                else:
-                    self.log.warning(f"No Macros updates for {name}")
+                try:
+                    self.log.debug(f"Desired NETBOX macros for {name}: {pformat(macros)}")
+                    zabbix_servers[name]["macros"] = self.zabbix.host_sync_macros(
+                        hostid=zabbix_servers[name]["hostid"],
+                        existing_macros=zabbix_servers[name].get("macros", []),
+                        desired_macros=macros,
+                        managed_prefixes=["{$NETBOX."],
+                    )
+                except Exception as e:
+                    self.log.error(f"Unable to update macros for {name}: {e}")
+                    # raise
 
     @staticmethod
     def add_tag_nodupe(tags, new_tag):
@@ -669,15 +660,9 @@ class SonicNetboxZabbix:
                 self.log.info(f"open_tcp_ports: {open_tcp_ports}")
                 self.log.info(f"open_udp_ports: {open_udp_ports}")
 
-                # Pull current macros in, minus {$TCP_OPEN_PORTS} and {$UDP_OPEN_PORTS}
-                if "macros" in zabbix_servers[name]:
-                    macros = zabbix_servers[name]["macros"]
-                    self.log.debug(f"macros(pre): {pformat(macros)}")
-                    macros = [item for item in macros if not item["macro"].startswith("{$TCP_OPEN_PORTS}")]
-                    macros = [item for item in macros if not item["macro"].startswith("{$UDP_OPEN_PORTS}")]
-                else:
-                    macros = []
-                self.log.debug(f"macros(post): {pformat(macros)}")
+                # Build the desired port macro set; host_sync_macros diffs it
+                # against what's on the host and only touches these two macros.
+                macros = []
 
                 if open_tcp_ports and len(open_tcp_ports) >= 1:
                     macros.append(
@@ -699,16 +684,15 @@ class SonicNetboxZabbix:
 
                 # Actually save changes #
                 try:
-                    self.log.debug(f"Macros for {name}: {pformat(macros)}")
-                    self.zabbix.host_update_macros(
+                    self.log.debug(f"Desired port macros for {name}: {pformat(macros)}")
+                    zabbix_servers[name]["macros"] = self.zabbix.host_sync_macros(
                         hostid=zabbix_servers[name]["hostid"],
-                        macros=macros,
+                        existing_macros=zabbix_servers[name].get("macros", []),
+                        desired_macros=macros,
+                        managed_prefixes=["{$TCP_OPEN_PORTS}", "{$UDP_OPEN_PORTS}"],
                     )
-                    # Keep the shared snapshot current so later passes don't
-                    # clobber these macros with the stale start-of-run copy.
-                    zabbix_servers[name]["macros"] = macros
-                except Exception:
-                    self.log.error(f"Unable to update macros for {name}")
+                except Exception as e:
+                    self.log.error(f"Unable to update macros for {name}: {e}")
                     # raise
 
     def _zabbix_is_noc(self) -> bool:
