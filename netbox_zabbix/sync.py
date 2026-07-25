@@ -312,9 +312,10 @@ class SonicNetboxZabbix:
 
                 self.log.debug(f"{name} tags(final): {pformat(tags)}")
 
-                self.zabbix.host_update_tags(
+                zabbix_servers[name]["tags"] = self.zabbix.host_sync_tags(
                     hostid=zabbix_servers[name]["hostid"],
-                    tags=tags,
+                    existing_tags=zabbix_servers[name].get("tags", []),
+                    desired_tags=tags,
                 )
 
             else:

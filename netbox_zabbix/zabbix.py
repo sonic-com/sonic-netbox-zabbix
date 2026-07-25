@@ -72,10 +72,34 @@ class ZabbixClient:
         self.log.debug(f"returning groupid:{groupid}")
         return {"groupid": int(groupid)}
 
-    def host_update_tags(self, hostid, tags):
-        response = self.api.host.update(hostid=hostid, tags=tags)
+    def host_sync_tags(self, hostid, existing_tags, desired_tags):
+        """Update a host's tags only when the desired set actually differs.
+
+        Zabbix has no per-tag API -- host.update(tags=...) always replaces
+        the full set -- so the best selective behavior is to skip the call
+        entirely when nothing changed. Comparison is order-insensitive and
+        desired tags are deduped before sending.
+
+        Returns the resulting tag list so callers can refresh their
+        in-memory snapshot of the host.
+        """
+        seen = set()
+        deduped = []
+        for item in desired_tags:
+            key = (item["tag"], item.get("value", ""))
+            if key not in seen:
+                seen.add(key)
+                deduped.append(item)
+
+        current = {(item["tag"], item.get("value", "")) for item in existing_tags}
+        if current == seen:
+            self.log.debug(f"{hostid}: tags unchanged")
+            return deduped
+
+        self.log.info(f"{hostid}: updating tags")
+        response = self.api.host.update(hostid=hostid, tags=deduped)
         self.log.debug(f"{hostid}:response: {pformat(response)}")
-        return response
+        return deduped
 
     def host_update_inventory(self, hostid, inventory):
         response = self.api.host.update(hostid=hostid, inventory=inventory)
