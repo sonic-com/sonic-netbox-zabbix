@@ -448,10 +448,13 @@ class SonicNetboxZabbix:
                 # If we did anything, update Zabbix
                 if inventory:
                     self.log.debug(f"{name}:Inventory: {pformat(inventory)}")
-                    self.zabbix.host_update_inventory(
-                        hostid=zabbix_servers[name]["hostid"],
-                        inventory=inventory,
-                    )
+                    try:
+                        self.zabbix.host_update_inventory(
+                            hostid=zabbix_servers[name]["hostid"],
+                            inventory=inventory,
+                        )
+                    except Exception as e:
+                        self.log.error(f"Unable to update inventory for {name}: {e}")
                 else:
                     self.log.warning(f"{name}No inventory updates")
 
