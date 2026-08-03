@@ -102,7 +102,9 @@ class ZabbixClient:
         return deduped
 
     def host_update_inventory(self, hostid, inventory):
-        response = self.api.host.update(hostid=hostid, inventory=inventory)
+        # Force inventory_mode to Automatic (1) so hosts whose inventory is
+        # disabled (-1) or manual (0) accept the update instead of rejecting it.
+        response = self.api.host.update(hostid=hostid, inventory_mode=1, inventory=inventory)
         self.log.debug(f"{hostid}:response: {pformat(response)}")
         return response
 
