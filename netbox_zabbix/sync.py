@@ -558,8 +558,8 @@ class SonicNetboxZabbix:
                 if any(tag["slug"] == "zabbix-enable" for tag in nbsrv.tags):
                     self.log.debug("Zabbix Enable Tag")
                     self.zabbix.host_enable(zbsrv)
-                # Disable if tagged Zabbix Disable
-                elif any(tag["slug"] == "zabbix-disable" for tag in nbsrv.tags):
+                # Disable if tagged Zabbix Disable or Zabbix Do Not Monitor
+                elif any(tag["slug"] in ("zabbix-disable", "zabbix-do-not-monitor") for tag in nbsrv.tags):
                     self.log.debug("Zabbix Disable Tag")
                     self.zabbix.host_disable(zbsrv)
                 # Disable if status is various inactive types
