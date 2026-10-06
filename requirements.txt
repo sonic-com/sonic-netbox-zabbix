@@ -14,7 +14,7 @@ pynetbox==7.6.0
     # via sonic-netbox-zabbix
 requests==2.33.0
     # via pynetbox
-urllib3==2.7.0
+urllib3==2.8.0
     # via requests
 zabbix-utils==2.0.4
     # via sonic-netbox-zabbix
