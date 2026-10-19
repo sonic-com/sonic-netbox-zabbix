@@ -190,9 +190,14 @@ class NetboxClient:
             ipmi_interface = self.api.dcim.interfaces.get(name="IPMI", device_id=server.id)
             if ipmi_interface:
                 self.log.debug(f"IPMI interface: {ipmi_interface}")
-                ipmi_ip = self.api.ipam.ip_addresses.get(interface_id=ipmi_interface.id)
-                if ipmi_ip:
-                    ipmask = str(ipmi_ip)
+                ipmi_ips = list(self.api.ipam.ip_addresses.filter(interface_id=ipmi_interface.id))
+                # Extra non-active IPs (e.g. staged for a renumber) get ignored
+                if len(ipmi_ips) > 1:
+                    ipmi_ips = [ip for ip in ipmi_ips if ip.status.value == "active"]
+                if len(ipmi_ips) == 1:
+                    ipmask = str(ipmi_ips[0])
+                elif ipmi_ips:
+                    self.log.warning(f"{server}: multiple active IPMI IPs {ipmi_ips}, skipping")
                 self.log.debug(f"IP from IPMI interface: {ipmask}")
             else:
                 self.log.debug("No IPMI interface")
