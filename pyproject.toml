@@ -10,6 +10,8 @@ dependencies = [
     "ConfigArgParse>=1.7,<2",
     "zabbix-utils>=2.0.0,<3",
     "pynetbox>=7.3.3,<8",
+    # Floor for the eMudhra/emSign CA incident (PSF advisory, discuss.python.org/t/109576)
+    "certifi>=2026.10.19",
 ]
 
 [project.urls]
