@@ -1,0 +1,29 @@
+name: requirements.txt
+
+# Keep the exported requirements.txt in step with uv.lock (Dependabot only
+# touches the lockfile). Commits the refreshed export back to the same branch.
+on:
+  push:
+    paths:
+      - pyproject.toml
+      - uv.lock
+      - Makefile
+
+permissions:
+  contents: write
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv lock --check
+      - run: make requirements.txt
+      - name: Commit if changed
+        run: |
+          git diff --quiet requirements.txt && exit 0
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "build: regenerate requirements.txt from uv.lock" requirements.txt
+          git push
