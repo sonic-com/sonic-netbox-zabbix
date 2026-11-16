@@ -12,6 +12,8 @@ dependencies = [
     "pynetbox>=7.3.3,<8",
     # Floor for the eMudhra/emSign CA incident (PSF advisory, discuss.python.org/t/109576)
     "certifi>=2026.10.19",
+    # Floor for GHSA-vxq7-64xx-v4gw, GHSA-8988-9cw3-xx77, GHSA-gh4c-6fx4-qh6g
+    "urllib3>=2.8.0",
 ]
 
 [project.urls]
