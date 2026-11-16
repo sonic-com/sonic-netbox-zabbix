@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = ">=3.11, <4"
 resolution-markers = [
     "python_full_version >= '3.12'",
@@ -164,11 +164,11 @@ wheels = [
 
 [[package]]
 name = "configargparse"
-version = "1.8.0"
+version = "1.9.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/5d/ed/33c0ba7f0b5be384ff8a2101ce77728f219e816b2104819f1651477e1ad5/configargparse-1.8.0.tar.gz", hash = "sha256:22a417f4d7b00149f0af82ef7c491f8ecc4b1d5454633fd319b386f5eb806f92", size = 74830, upload-time = "2026-09-28T15:10:52.119Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/bc/d9/c591a80cf3335de7820c6762f8ee9298a43da5319803d319e16657b6fdf2/configargparse-1.9.0.tar.gz", hash = "sha256:48d9c22affe4ac419b4dd0691fa929d759e1f99574be41826785f2dbf3da63a5", size = 83875, upload-time = "2026-10-27T23:44:25.518Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/b0/74/bd8453e8e20296063f9f431e6f1417f1b62bae0e012821df07fb71ede6c2/configargparse-1.8.0-py3-none-any.whl", hash = "sha256:bb25b307c3cd46a3e868e7f7aa51487eb8003a9f01cac3ae129b66ec26eb794c", size = 34611, upload-time = "2026-09-28T15:10:50.818Z" },
+    { url = "https://files.pythonhosted.org/packages/bd/de/f7fe2171f2b650ef7dd455c4c7f6dbaf53cc942430a2e0ff6b2450e728b5/configargparse-1.9.0-py3-none-any.whl", hash = "sha256:e4ecc54d821ca97c43e6152403f40e158aff79d809c3447746fa92b136dc1e31", size = 37381, upload-time = "2026-10-27T23:44:24.04Z" },
 ]
 
 [[package]]
@@ -268,9 +268,9 @@ wheels = [
 
 [[package]]
 name = "zabbix-utils"
-version = "2.0.4"
+version = "2.0.5"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/76/d6/5e52b23074938833bf37426940965597eb8057bf5860014deda997b3c317/zabbix_utils-2.0.4.tar.gz", hash = "sha256:e46b15c5b51ade4692aa009939372bce68871cf64d6572e96e8cb193cb0590ea", size = 28658, upload-time = "2025-12-17T10:29:50.067Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/6b/65/24bfe2575d5b626546ad55d034e02f2bed43d556eb8cb5e72b340e345e18/zabbix_utils-2.0.5.tar.gz", hash = "sha256:824facd0f87ddb57397528b2c9568036f394f8fc88a4709ec92f15a0a8b6f14f", size = 39431, upload-time = "2026-11-13T12:29:11.051Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/64/e5/9c655df064fa6fdf1796db5c6e5505b7d19695ce8fda34dab326a84f86cf/zabbix_utils-2.0.4-py3-none-any.whl", hash = "sha256:103e07c54d37c775781d7030788a5f9b2a361420963d7a458feae96892fb4c48", size = 37833, upload-time = "2025-12-17T10:29:48.293Z" },
+    { url = "https://files.pythonhosted.org/packages/5d/62/455e06a86e54a4e1e06dac76ef6de81576b39072ec84a3497953314af0bb/zabbix_utils-2.0.5-py3-none-any.whl", hash = "sha256:d248c503d524a2e3e0f345730ba498043a30c7af78602d0dd215e22aa15f8090", size = 38011, upload-time = "2026-11-13T12:29:09.466Z" },
 ]
