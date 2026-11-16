@@ -132,18 +132,12 @@ class NetboxClient:
     @functools.cache
     def is_physical(self, server) -> bool:
         self.log.debug(server)
-        if "device_type" in dict(server):
-            return True
-        else:
-            return False
+        return "device_type" in dict(server)
 
     @functools.cache
     def is_virtual(self, server) -> bool:
         self.log.debug(server)
-        if "memory" in dict(server):
-            return True
-        else:
-            return False
+        return "memory" in dict(server)
 
     @functools.cache
     def virt_type(self, server) -> bool:

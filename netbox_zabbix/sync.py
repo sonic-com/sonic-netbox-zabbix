@@ -18,7 +18,7 @@ class SonicNetboxZabbix:
         try:
             self.config = parse_args()
         except Exception as e:
-            print(f"An error occurred parsing config files or command-line arguments: {str(e)}")
+            print(f"An error occurred parsing config files or command-line arguments: {e!s}")
             raise
 
         self.log = setup_logging(self.config)
@@ -41,7 +41,7 @@ class SonicNetboxZabbix:
         for name in zabbix_servers:
             if "batfish-tailor.ts.net" in name:
                 continue
-            if name in netbox_servers and netbox_servers[name]:
+            if netbox_servers.get(name):
                 netbox_servers[name]["custom_fields"]["zabbix_host_id"] = int(zabbix_servers[name]["hostid"])
                 netbox_servers[name].save()
             else:
@@ -49,7 +49,7 @@ class SonicNetboxZabbix:
 
     def copy_netbox_info_to_zabbix_macros(self, netbox_servers, zabbix_servers):
         for name in zabbix_servers:
-            if name in netbox_servers and netbox_servers[name]:
+            if netbox_servers.get(name):
                 if self.config.verbose >= 4:
                     self.log.debug(f"TRACE: macros for {name}")
                 srv = netbox_servers[name]
@@ -161,7 +161,7 @@ class SonicNetboxZabbix:
                     }
                 )
 
-                if "update_group" in srv.custom_fields and srv.custom_fields["update_group"]:
+                if srv.custom_fields.get("update_group"):
                     self.log.info(f"Adding update_group to zabbix macro for {name}")
 
                     macros.append(
@@ -198,7 +198,7 @@ class SonicNetboxZabbix:
                         desired_macros=macros,
                         managed_prefixes=["{$NETBOX."],
                     )
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001 - one bad host must not abort the sync
                     self.log.error(f"Unable to update macros for {name}: {e}")
                     # raise
 
@@ -210,7 +210,7 @@ class SonicNetboxZabbix:
 
     def copy_netbox_info_to_zabbix_tags(self, netbox_servers, zabbix_servers):
         for name in zabbix_servers:
-            if name in netbox_servers and netbox_servers[name]:
+            if netbox_servers.get(name):
                 if self.config.verbose >= 4:
                     self.log.debug(f"TRACE: tags for {name}")
                 srv = netbox_servers[name]
@@ -250,7 +250,7 @@ class SonicNetboxZabbix:
                     # If server is active, don't let it be nopage/nonotice unless explicitly
                     # set that way in Netbox (further down will get added back if tag is set)
                     elif srv.status["value"] == "active":
-                        tags = [item for item in tags if not item["tag"] == "sonic-alerting"]
+                        tags = [item for item in tags if item["tag"] != "sonic-alerting"]
 
                 self.log.debug(f"{name} tags(2): {pformat(tags)}")
 
@@ -268,16 +268,15 @@ class SonicNetboxZabbix:
 
                 self.log.debug(f"{name} tags(3): {pformat(tags)}")
 
-                if srv.custom_fields:
-                    if "zabbix_alert_routing" in srv.custom_fields and srv.custom_fields["zabbix_alert_routing"]:
-                        # Remove existing sonic-alert-routing tag
-                        tags = [item for item in tags if not item["tag"] == "sonic-alert-routing"]
-                        tags.append(
-                            {
-                                "tag": "sonic-alert-routing",
-                                "value": srv.custom_fields["zabbix_alert_routing"],
-                            }
-                        )
+                if srv.custom_fields and srv.custom_fields.get("zabbix_alert_routing"):
+                    # Remove existing sonic-alert-routing tag
+                    tags = [item for item in tags if item["tag"] != "sonic-alert-routing"]
+                    tags.append(
+                        {
+                            "tag": "sonic-alert-routing",
+                            "value": srv.custom_fields["zabbix_alert_routing"],
+                        }
+                    )
 
                 if srv.tags:
                     self.log.info(f"{name}: Updating tags")
@@ -298,7 +297,7 @@ class SonicNetboxZabbix:
                     self.log.warning(f"{name}: No netbox tags")
                     self.log.debug(f"{name} srv.tags {pformat(dict(srv.tags))}")
 
-                if "update_group" in srv.custom_fields and srv.custom_fields["update_group"]:
+                if srv.custom_fields.get("update_group"):
                     self.log.info(f"Adding update_group to zabbix for {name}")
 
                     tags.append(
@@ -323,7 +322,7 @@ class SonicNetboxZabbix:
 
     def copy_netbox_info_to_zabbix_inventory(self, netbox_servers, zabbix_servers):
         for name in zabbix_servers:
-            if name in netbox_servers and netbox_servers[name]:
+            if netbox_servers.get(name):
                 if self.config.verbose >= 4:
                     self.log.debug(f"TRACE:{name}: inventory")
                 srv = netbox_servers[name]
@@ -453,7 +452,7 @@ class SonicNetboxZabbix:
                             hostid=zabbix_servers[name]["hostid"],
                             inventory=inventory,
                         )
-                    except Exception as e:
+                    except Exception as e:  # noqa: BLE001 - one bad host must not abort the sync
                         self.log.error(f"Unable to update inventory for {name}: {e}")
                 else:
                     self.log.warning(f"{name}No inventory updates")
@@ -490,7 +489,7 @@ class SonicNetboxZabbix:
 
     def copy_netbox_info_to_zabbix_hostgroups(self, zabbix_servers, netbox_servers):
         for name in zabbix_servers:
-            if name in netbox_servers and netbox_servers[name]:
+            if netbox_servers.get(name):
                 if self.config.verbose >= 4:
                     self.log.debug(f"TRACE:{name}:groups")
                 nbsrv = netbox_servers[name]
@@ -549,7 +548,7 @@ class SonicNetboxZabbix:
 
     def disable_enable_zabbix_hosts_from_netbox_data(self, zabbix_servers, netbox_servers):
         for name in zabbix_servers:
-            if name in netbox_servers and netbox_servers[name]:
+            if netbox_servers.get(name):
                 if self.config.verbose >= 4:
                     self.log.debug(f"TRACE:{name}:disable?")
                 nbsrv = netbox_servers[name]
@@ -599,7 +598,7 @@ class SonicNetboxZabbix:
 
     def copy_netbox_ipmi_to_zabbix(self, netbox_servers, zabbix_servers):
         for name in zabbix_servers:
-            if name in netbox_servers and netbox_servers[name]:
+            if netbox_servers.get(name):
                 if self.config.verbose >= 4:
                     self.log.debug(f"TRACE:{name}:IPMI")
                 nbsrv = netbox_servers[name]
@@ -629,7 +628,7 @@ class SonicNetboxZabbix:
             zabbix_servers (_list_): _Zabbix Servers_
         """
         for name in zabbix_servers:
-            if name in netbox_servers and netbox_servers[name]:
+            if netbox_servers.get(name):
                 if self.config.verbose >= 4:  # 4
                     self.log.debug(f"TRACE:{name}:Services")
                 nbsrv = netbox_servers[name]
@@ -695,7 +694,7 @@ class SonicNetboxZabbix:
                         desired_macros=macros,
                         managed_prefixes=["{$TCP_OPEN_PORTS}", "{$UDP_OPEN_PORTS}"],
                     )
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001 - one bad host must not abort the sync
                     self.log.error(f"Unable to update macros for {name}: {e}")
                     # raise
 

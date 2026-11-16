@@ -29,7 +29,7 @@ repos:
 
 # Linter + formatter (replaces black, isort, and flake8)
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: v0.15.16
+  rev: v0.17.5
   hooks:
     # ruff-check must come before ruff-format when using --fix
   - id: ruff-check

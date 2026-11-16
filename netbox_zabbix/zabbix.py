@@ -1,5 +1,6 @@
 """Thin wrapper around the Zabbix API for the operations this tool needs."""
 
+import contextlib
 import functools
 from pprint import pformat
 
@@ -18,10 +19,9 @@ class ZabbixClient:
         self.api = api
 
     def __del__(self):
-        try:
+        # Best-effort cleanup on teardown
+        with contextlib.suppress(Exception):
             self.api.logout()
-        except Exception:  # pragma: no cover - best-effort cleanup on teardown
-            pass
 
     @functools.cache
     def get_hosts_all(self):
