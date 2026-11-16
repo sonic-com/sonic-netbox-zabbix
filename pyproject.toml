@@ -31,3 +31,8 @@ packages = ["netbox_zabbix"]
 
 [tool.ruff]
 line-length = 120
+
+[tool.ruff.lint]
+# B019: cached methods hold `self` for the cache's lifetime. Fine here: each
+# client/sync object lives for the whole one-shot CLI run anyway.
+ignore = ["B019"]
